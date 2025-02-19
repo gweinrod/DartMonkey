@@ -43,6 +43,14 @@ function rotationMatrixZ(theta) {
 }
 
 //scale
+function scalingMatrix(sx, sy, sz) {
+	return new THREE.Matrix4().set(
+		sx, 0, 0, 0,
+		0, sy, 0, 0,
+		0, 0, sz, 0,
+		0, 0, 0, 1
+	);
+}
 
 //shear
 
@@ -57,8 +65,8 @@ function rotationMatrixZ(theta) {
 /* Initializations */
 
 //constants
-const WORLDSIZE = 1000;
-const SKYBLUE = 0x000002;
+const WORLDSIZE = 10000;
+const SKYBLUE = 0x8bdafc;
 
 const FOV = 60; 
 const ASPECT = window.innerWidth / window.innerHeight;
@@ -79,14 +87,31 @@ let clock = new THREE.Clock();
 /* Geometries */
 
 //sky
-let skyGeom = new THREE.SphereGeometry(WORLDSIZE);
-let skyMat = new THREE.MeshBasicMaterial({color: SKYBLUE});
+let skyGeom = new THREE.SphereGeometry(WORLDSIZE, 32, 32);
+let skyMat = new THREE.MeshStandardMaterial({color: SKYBLUE, side: THREE.BackSide});
 let sky = new THREE.Mesh(skyGeom, skyMat);
 scene.add(sky);
 
 //player
 
 //balloon
+function createBalloon(color, position)
+{
+    let balloonGeom = new THREE.SphereGeometry(2, 32, 32);
+    let scaling = scalingMatrix(1, 1.2, 1);
+    balloonGeom.applyMatrix4(scaling);
+    let balloonMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.2 });
+    let balloon = new THREE.Mesh(balloonGeom, balloonMat);
+
+    balloon.position.set(position.x, position.y, position.z);
+
+    balloons.push(balloon);
+    scene.add(balloon);
+}
+
+createBalloon(0xff0000, { x: -10, y: 0, z: 0 });
+createBalloon(0x00ff00, { x: 0, y: 0, z: 0 });
+createBalloon(0x0000ff, { x: 10, y: 0, z: 0 });
 
 //details
 
@@ -101,7 +126,7 @@ scene.add(sky);
 
 /* Camera */
 
-camera.position.set(0, 10, 20);
+camera.position.set(0, 0, 20);
 camera.lookAt(0, 0, 0);
 
 /* End Camera */
@@ -130,6 +155,15 @@ window.addEventListener('resize', onWindowResize, false);
 let attachedObject = null;
 let blendingFactor = 0.1;
 */
+
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(0, 20, 10);
+scene.add(light);
+
+const ambientLight = new THREE.AmbientLight(0x404040, 2);
+scene.add(ambientLight);
+
+/* End Lighting */
 
 
 /* Controls */
@@ -160,7 +194,11 @@ document.addEventListener('keydown', onKeyDown, false);
 
 
 /* Animation Functions */
-function animateBalloon() {}
+function animateBalloon(balloon, index) {
+    let time = clock.getElapsedTime();
+    balloon.position.y += Math.sin(time + index) * 0.01;
+}
+
 /* End Animation Functions */
 
 
@@ -173,7 +211,7 @@ function animate() {
     // TODO: Update sky color
 
     // TODO: Loop Balloons
-    balloons.forEach(animateBalloon(obj, index))
+    balloons.forEach((balloon, index) => animateBalloon(balloon, index));
     
         //disable controls
     // TODO: Animate Character
