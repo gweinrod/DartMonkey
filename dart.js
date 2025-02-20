@@ -12,7 +12,7 @@ const f = w * (1 + F_RATIO);
 //
 
 /* Vertices */
-let body = [
+const vertices = new Float32Array([
 
     // Body
     //front face
@@ -22,64 +22,76 @@ let body = [
     -w, w, l, //3
     //bottom face
     -w, -w, l, //4
-    -w, -w, -l, //5
-    w, -w, -l, //6
+    -w, -w, w - l, //5
+    w, -w, w - l, //6
     w, -w, l, //7
     //right face
     w, -w, l, //8
-    w, -w, -l, //9
-    w, w, -l, //10
+    w, -w, w - l, //9
+    w, w, w - l, //10
     w, w, l, //11
     //top face
     -w, w, l, //12
     w, w, l, //13
-    w, w, -l, //14
-    -w, w, -l, //15
+    w, w, w - l, //14
+    -w, w, w - l, //15
     //left face
     -w, -w, l, //16,
-    -w, -w, -l, //17,
-    -w, w, -l, //18,
+    -w, -w, w - l, //17,
+    -w, w, w - l, //18,
     -w, w, l, //19,
 
     // Tip
     //bottom face
-    -w, -w, -l, //20,
+    -w, -w, w - l, //20,
     0, 0, -l, //21,
-    w, -w, -l, //22,
+    w, -w, w - l, //22,
     //right face
-    w, -w, -l, //23
+    w, -w, w - l, //23
     0, 0, -l, //24
-    -w, -w, -l, //25
+    -w, -w, w - l, //25
     //top face
-    -w, w, -l, //26
-    w, w, -l, //27
+    -w, w, w - l, //26
+    w, w, w - l, //27
     0, 0, -l, //28
     //left face
-    -w, -w, -l, //29
+    -w, -w, w - l, //29
     0, 0, -l, //30
-    -w, w, -l, //31
+    -w, w, w - l, //31
 
-    // Fins
+    // Fins are double sided
     //bottom fin
     0, -w, l, //32
     0, -w, l - 2 * f, //33
     0, -w - f, l, //34
+    0, -w, l, //35
+    0, -w, l - 2 * f, //36
+    0, -w - f, l, //37
     //right fin
-    w, 0, l, //35
-    w, 0, l - 2 * f, //36
-    w + f, 0, l, //37
+    w, 0, l, //38
+    w, 0, l - 2 * f, //39
+    w + f, 0, l, //40
+    w, 0, l, //41
+    w, 0, l - 2 * f, //42
+    w + f, 0, l, //43
     //top fin
-    0, w, l, //38
-    0, w, l - 2 * f, //39
-    0, w + f, l, //40
+    0, w, l, //44
+    0, w, l - 2 * f, //45
+    0, w + f, l, //46
+    0, w, l, //47
+    0, w, l - 2 * f, //48
+    0, w + f, l, //49
     //left fin
-    -w, 0, l, //41
-    -w, 0, l - 2 * f, //42
-    -w - f, 0, l, //43
+    -w, 0, l, //50
+    -w, 0, l - 2 * f, //51
+    -w - f, 0, l, //52
+    -w, 0, l, //53
+    -w, 0, l - 2 * f, //54
+    -w - f, 0, l, //55
 
-];
+]);
 
-let indices = [
+const indices = [
     // Body
     //front face
     0, 1, 2,
@@ -88,8 +100,8 @@ let indices = [
     4, 5, 6,
     6, 7, 4,
     //right face
-    8,9,10,
-    10,11,8,
+    8, 9, 10,
+    10, 11, 8,
     //top face
     12, 13, 14,
     14, 15, 12,
@@ -110,20 +122,98 @@ let indices = [
     // Fins are double sided
     //bottom fin
     32, 33, 34,
-    34, 33, 32,
-    //right fin
-    35, 36, 37,
     37, 36, 35,
-    //top fin
+    //right fin
     38, 39, 40,
-    40, 39, 38,
+    43, 42, 41,
+    //top fin
+    44, 45, 46,
+    49, 48, 47,
     //left fin
-    41, 42, 43,
-    43, 42, 1
+    50, 51, 52,
+    55, 54, 53
 ]
 
-let normals = [
-    //TODO
-]
+const normals = new Float32Array([
+
+    // Body
+    //front face
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    //bottom face
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    0, -1, 0,
+    //right face
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    //top face
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    //left face
+    -1, 0, 0,
+    -1, 0, 0,
+    -1, 0, 0,
+    -1, 0, 0,
+    
+    // Tip
+    //bottom face
+    0, -1, -1,
+    0, -1, -1,
+    0, -1, -1,
+    0, -1, -1,
+    //right face
+    1, 0, -1,
+    1, 0, -1,
+    1, 0, -1,
+    1, 0, -1, 
+    //top face
+    0, 1, -1,
+    0, 1, -1,
+    0, 1, -1,
+    0, 1, -1,
+    //left face
+    -1, 0, -1,
+    -1, 0, -1,
+    -1, 0, -1,
+    -1, 0, -1,
+
+    // Fins are double sided
+    //bottom fin
+    -1, 0, 0,
+    -1, 0, 0,
+    -1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    //right fin
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+    //top fin
+    -1, 0, 0,
+    -1, 0, 0,
+    -1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    1, 0, 0,
+    //left fin
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, 1,
+    0, 0, -1,
+    0, 0, -1,
+    0, 0, -1,
+]);
 
 //TODO 
