@@ -55,6 +55,36 @@ function scalingMatrix(sx, sy, sz) {
 	);
 }
 
+//shearX
+function shearMatrixX(shy, shz) {
+	return new THREE.Matrix4().set(
+		1, 0, 0, 0,
+		shy, 1, 0, 0,
+		shz, 0, 1, 0,
+		0, 0, 0, 1
+	);
+}
+
+//shearY
+function shearMatrixY(shx, shz) {
+	return new THREE.Matrix4().set(
+		1, shx, 0, 0,
+		0, 1, 0, 0,
+		0, shz, 1, 0,
+		0, 0, 0, 1
+	);
+}
+
+//shearZ
+function shearMatrixZ(shx, shy) {
+	return new THREE.Matrix4().set(
+		1, 0, shx, 0,
+		0, 1, shy, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	);
+}
+
 //TODO: Custom Ballon Transformations
     //eg poppping
     //eg blown by wind 
@@ -135,28 +165,67 @@ let rotator = createDart();
 let translator = createDart();
 
 //balloon
-function createBalloon(color, position)
+// function createBalloon(color, position)
+// {
+//     let balloonGeom = new THREE.SphereGeometry(BALLOON_RADIUS, 32, 32);
+//     let balloonMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.2 });
+//     let balloon = new THREE.Mesh(balloonGeom, balloonMat);
+    
+//     //use matrices for geometries, three.js calls for imports
+//     let transformations = new THREE.Matrix4();
+//     transformations.multiplyMatrices(scalingMatrix(1, 1.2, 1), transformations);
+//     //transformations.multiplyMatrices(shearMatrixY(0.2, 0), transformations);
+//     transformations.multiplyMatrices(scalingMatrix(0.9, 1, 1), transformations);
+//     transformations.multiplyMatrices(translationMatrix(position.x, position.y, position.z), transformations);
+//     balloon.matrix.copy(transformations);
+//     balloon.matrixAutoUpdate = false;
+
+//     balloons.push(balloon);
+//     scene.add(balloon);
+//     return balloon;
+// }
+
+function createBalloon(color, position) 
 {
     let balloonGeom = new THREE.SphereGeometry(BALLOON_RADIUS, 32, 32);
     let balloonMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.2 });
     let balloon = new THREE.Mesh(balloonGeom, balloonMat);
 
-    //let scaling = scalingMatrix(1, 1.2, 1);
-    //balloonGeom.applyMatrix4(scaling);
-    //balloon.position.set(position.x, position.y, position.z);
+    let vertices = balloonGeom.attributes.position;
     
-        //use matrices for geometries, three.js calls for imports
+    for (let i = 0; i < vertices.count; i++) 
+        {
+        let x = vertices.getX(i);
+        let y = vertices.getY(i);
+        let z = vertices.getZ(i);
+
+        if (y <= 0) 
+        {
+            let factor = 1 + y * 0.05;
+            vertices.setX(i, x * factor);
+            vertices.setZ(i, z * factor);
+            vertices.setY(i, y*0.95);
+        }
+        else if (y > 0) 
+        {
+            vertices.setY(i, y*0.8);
+        }
+    }
+
+    balloonGeom.attributes.position.needsUpdate = true;
+    
+    //use matrices for geometries, three.js calls for imports
     let transformations = new THREE.Matrix4();
-    transformations.multiplyMatrices(transformations, scalingMatrix(1, 1.2, 1));
+    transformations.multiplyMatrices(scalingMatrix(1, 1.4, 1), transformations);
     transformations.multiplyMatrices(translationMatrix(position.x, position.y, position.z), transformations);
     balloon.matrix.copy(transformations);
     balloon.matrixAutoUpdate = false;
-
 
     balloons.push(balloon);
     scene.add(balloon);
     return balloon;
 }
+
 
 createBalloon(0x0000ff, { x: -20, y: 0, z: 0 });
 createBalloon(0xff0000, { x: -10, y: 0, z: 0 });
@@ -164,9 +233,27 @@ createBalloon(0x00ff00, { x: 0, y: 0, z: 0 });
 createBalloon(0x0000ff, { x: 10, y: 0, z: 0 });
 createBalloon(0x0000ff, { x: 20, y: 0, z: 0 });
 
+//imported geometry balloons
+/*const loader = new GLTFLoader();
+loader.load('models/balloon_00_free/scene.gltf', function (gltf) {
+    const balloon_model = gltf.scene;
+    
+    // Adjust position, scale, and rotation
+    balloon_model.position.set(0, -10, 0);
+    balloon_model.scale.set(1, 1, 1);
+        
+    scene.add(balloon_model);
+    
+    balloon_model.position.set(0, 0, 0);
+    scene.add(balloon_model);
+    
+}, undefined, function (error) {
+    console.error('Error loading model:', error);
+});*/
+
 //details
 
-    //large tree
+    //large trees and ground
     const loader = new GLTFLoader();
     loader.load('models/procedural_tree_generator/scene.gltf', function (gltf) {
         const tree = gltf.scene;
