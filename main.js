@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import DartGeometry from './dart';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 /* Transformations */
 
@@ -105,8 +106,8 @@ function createDart() {
     let dartMat = new THREE.MeshStandardMaterial({ color: 0xFF0000, roughness: 0.0, metalness: 0.5 });
     let dart = new THREE.Mesh(dartGeom, dartMat);
 
-    //dart.applyMatrix4(scalingMatrix(2,2,2));
-    dart.position.set(0,0,0);
+    dart.applyMatrix4(scalingMatrix(0.5,0.5,0.5));
+    dart.position.set(0,-5,0);
 
     darts.push(dart);
     scene.add(dart);
@@ -136,6 +137,27 @@ createBalloon(0x0000ff, { x: 10, y: 0, z: 0 });
 //details
 
     //large tree
+    const loader = new GLTFLoader();
+    loader.load('models/procedural_tree_generator/scene.gltf', function (gltf) {
+        const tree = gltf.scene;
+    
+        // Adjust position, scale, and rotation
+        tree.position.set(0, -10, 0);
+        tree.scale.set(5, 5, 5);
+        
+        scene.add(tree);
+    
+        // Clone trees after the model is loaded
+        for (let i = 0; i < 1; i++) {
+            //let treeClone = tree.clone();
+            tree.position.set(10, -7, Math.random() * 10 - 5);
+            scene.add(tree);
+        }
+    
+    }, undefined, function (error) {
+        console.error('Error loading model:', error);
+    });
+    
 
     //small tree
 
@@ -146,7 +168,7 @@ createBalloon(0x0000ff, { x: 10, y: 0, z: 0 });
 
 /* Camera */
 
-camera.position.set(0, 0, 20);
+camera.position.set(0, 0, 30);
 camera.lookAt(0, 0, 0);
 
 /* End Camera */
@@ -241,7 +263,7 @@ function animate() {
     //darts.forEach((dart) => translateDart(dart, 1));
 
     darts.forEach((dart) =>  {
-        //dart.applyMatrix4(rotationMatrixZ(delta * 1));
+        dart.applyMatrix4(rotationMatrixZ(delta * 1));
         dart.applyMatrix4(rotationMatrixY(delta * 1));
     });
 
