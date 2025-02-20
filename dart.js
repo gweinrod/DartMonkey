@@ -1,97 +1,99 @@
 import * as THREE from 'three';
 
+export default class DartGeometry extends THREE.BufferGeometry {
+
 //user defined, change
-const W_RATIO = 16; //ratio of dart length to width
-const F_RATIO = 2 //ratio of fin height to dart width
+static W_RATIO = 16; //ratio of dart length to width
+static F_RATIO = 2 //ratio of fin height to dart width
 //
 
 //do not change
-const l = 0.5;
-const w = l / W_RATIO;
-const f = w * (1 + F_RATIO);
+static l = 0.5;
+static w = 0.5 / DartGeometry.W_RATIO;
+static f = DartGeometry.w * (1 + DartGeometry.F_RATIO);
 //
 
 /* Vertices */
-const vertices = new Float32Array([
+static positions = new Float32Array([
 
     // Body
     //front face
-    -w, -w, l, //0
-    w, -w, l, //1
-    w, w, l, //2
-    -w, w, l, //3
+    -DartGeometry.w, -DartGeometry.w, DartGeometry.l, //0
+    DartGeometry.w, -DartGeometry.w, DartGeometry.l, //1
+    DartGeometry.w, DartGeometry.w, DartGeometry.l, //2
+    -DartGeometry.w, DartGeometry.w, DartGeometry.l, //3
     //bottom face
-    -w, -w, l, //4
-    -w, -w, w - l, //5
-    w, -w, w - l, //6
-    w, -w, l, //7
+    -DartGeometry.w, -DartGeometry.w, DartGeometry.l, //4
+    -DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //5
+    DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //6
+    DartGeometry.w, -DartGeometry.w, DartGeometry.l, //7
     //right face
-    w, -w, l, //8
-    w, -w, w - l, //9
-    w, w, w - l, //10
-    w, w, l, //11
+    DartGeometry.w, -DartGeometry.w, DartGeometry.l, //8
+    DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //9
+    DartGeometry.w, DartGeometry.w, DartGeometry.w - DartGeometry.l, //10
+    DartGeometry.w, DartGeometry.w, DartGeometry.l, //11
     //top face
-    -w, w, l, //12
-    w, w, l, //13
-    w, w, w - l, //14
-    -w, w, w - l, //15
+    -DartGeometry.w, DartGeometry.w, DartGeometry.l, //12
+    DartGeometry.w, DartGeometry.w, DartGeometry.l, //13
+    DartGeometry.w, DartGeometry.w, DartGeometry.w - DartGeometry.l, //14
+    -DartGeometry.w, DartGeometry.w, DartGeometry.w - DartGeometry.l, //15
     //left face
-    -w, -w, l, //16,
-    -w, -w, w - l, //17,
-    -w, w, w - l, //18,
-    -w, w, l, //19,
+    -DartGeometry.w, -DartGeometry.w, DartGeometry.l, //16,
+    -DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //17,
+    -DartGeometry.w, DartGeometry.w, DartGeometry.w - DartGeometry.l, //18,
+    -DartGeometry.w, DartGeometry.w, DartGeometry.l, //19,
 
     // Tip
     //bottom face
-    -w, -w, w - l, //20,
-    0, 0, -l, //21,
-    w, -w, w - l, //22,
+    -DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //20,
+    0, 0, -DartGeometry.l, //21,
+    DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //22,
     //right face
-    w, -w, w - l, //23
-    0, 0, -l, //24
-    -w, -w, w - l, //25
+    DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //23
+    0, 0, -DartGeometry.l, //24
+    -DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //25
     //top face
-    -w, w, w - l, //26
-    w, w, w - l, //27
-    0, 0, -l, //28
-    //left face
-    -w, -w, w - l, //29
-    0, 0, -l, //30
-    -w, w, w - l, //31
+    -DartGeometry.w, DartGeometry.w, DartGeometry.w - DartGeometry.l, //26
+    DartGeometry.w, DartGeometry.w, DartGeometry.w - DartGeometry.l, //27
+    0, 0, -DartGeometry.l, //28
+    //DartGeometry.left face
+    -DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //29
+    0, 0, -DartGeometry.l, //30
+    -DartGeometry.w, DartGeometry.w, DartGeometry.w - DartGeometry.l, //31
 
     // Fins are double sided
     //bottom fin
-    0, -w, l, //32
-    0, -w, l - 2 * f, //33
-    0, -w - f, l, //34
-    0, -w, l, //35
-    0, -w, l - 2 * f, //36
-    0, -w - f, l, //37
+    0, -DartGeometry.w, DartGeometry.l, //32
+    0, -DartGeometry.w, DartGeometry.l - 2 * DartGeometry.f, //33
+    0, -DartGeometry.w - DartGeometry.f, DartGeometry.l, //34
+    0, -DartGeometry.w, DartGeometry.l, //35
+    0, -DartGeometry.w, DartGeometry.l - 2 * DartGeometry.f, //36
+    0, -DartGeometry.w - DartGeometry.f, DartGeometry.l, //37
     //right fin
-    w, 0, l, //38
-    w, 0, l - 2 * f, //39
-    w + f, 0, l, //40
-    w, 0, l, //41
-    w, 0, l - 2 * f, //42
-    w + f, 0, l, //43
+    DartGeometry.w, 0, DartGeometry.l, //38
+    DartGeometry.w, 0, DartGeometry.l - 2 * DartGeometry.f, //39
+    DartGeometry.w + DartGeometry.f, 0, DartGeometry.l, //40
+    DartGeometry.w, 0, DartGeometry.l, //41
+    DartGeometry.w, 0, DartGeometry.l - 2 * DartGeometry.f, //42
+    DartGeometry.w + DartGeometry.f, 0, DartGeometry.l, //43
     //top fin
-    0, w, l, //44
-    0, w, l - 2 * f, //45
-    0, w + f, l, //46
-    0, w, l, //47
-    0, w, l - 2 * f, //48
-    0, w + f, l, //49
-    //left fin
-    -w, 0, l, //50
-    -w, 0, l - 2 * f, //51
-    -w - f, 0, l, //52
-    -w, 0, l, //53
-    -w, 0, l - 2 * f, //54
-    -w - f, 0, l, //55
+    0, DartGeometry.w, DartGeometry.l, //44
+    0, DartGeometry.w, DartGeometry.l - 2 * DartGeometry.f, //45
+    0, DartGeometry.w + DartGeometry.f, DartGeometry.l, //46
+    0, DartGeometry.w, DartGeometry.l, //47
+    0, DartGeometry.w, DartGeometry.l - 2 * DartGeometry.f, //48
+    0, DartGeometry.w + DartGeometry.f, DartGeometry.l, //49
+    //DartGeometry.left fin
+    -DartGeometry.w, 0, DartGeometry.l, //50
+    -DartGeometry.w, 0, DartGeometry.l - 2 * DartGeometry.f, //51
+    -DartGeometry.w - DartGeometry.f, 0, DartGeometry.l, //52
+    -DartGeometry.w, 0, DartGeometry.l, //53
+    -DartGeometry.w, 0, DartGeometry.l - 2 * DartGeometry.f, //54
+    -DartGeometry.w - DartGeometry.f, 0, DartGeometry.l, //55
 
 ]);
 
-const indices = [
+static indices = [
     // Body
     //front face
     0, 1, 2,
@@ -106,8 +108,8 @@ const indices = [
     12, 13, 14,
     14, 15, 12,
     //left face
-    16, 17, 18,
-    18, 19, 16,
+    18, 17, 16,
+    16, 19, 18,
     
     // Tip
     //bottom face
@@ -134,7 +136,7 @@ const indices = [
     55, 54, 53
 ]
 
-const normals = new Float32Array([
+static normals = new Float32Array([
 
     // Body
     //front face
@@ -216,4 +218,22 @@ const normals = new Float32Array([
     0, 0, -1,
 ]);
 
-//TODO 
+    //scale
+    scalingMatrix(sx, sy, sz) {
+        return new THREE.Matrix4().set(
+            sx, 0, 0, 0,
+            0, sy, 0, 0,
+            0, 0, sz, 0,
+            0, 0, 0, 1
+        );
+    }
+
+    constructor(size = 10) {
+        super();
+        this.setAttribute('position', new THREE.BufferAttribute(DartGeometry.positions, 3));
+        this.setAttribute('normal', new THREE.BufferAttribute(DartGeometry.normals, 3));
+        this.setIndex(new THREE.BufferAttribute(new Uint16Array(DartGeometry.indices), 1));
+        this.applyMatrix4(this.scalingMatrix(size, size, size));
+    }
+
+}

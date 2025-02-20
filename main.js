@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import DartGeometry from './dart';
 
 /* Transformations */
 
@@ -79,7 +80,11 @@ const camera = new THREE.PerspectiveCamera(FOV, ASPECT, NEAR, FAR);
 //variables
 let players = [];
 let balloons = [];
+let darts = [];
 let clock = new THREE.Clock();
+let time = 0;
+let delta = 0;
+let last = 0;
 
 /* End Initializations */
 
@@ -93,6 +98,21 @@ let sky = new THREE.Mesh(skyGeom, skyMat);
 scene.add(sky);
 
 //player
+
+//darts
+function createDart() {
+    let dartGeom = new DartGeometry(14);
+    let dartMat = new THREE.MeshStandardMaterial({ color: 0xFF0000, roughness: 0.0, metalness: 0.5 });
+    let dart = new THREE.Mesh(dartGeom, dartMat);
+
+    //dart.applyMatrix4(scalingMatrix(2,2,2));
+    dart.position.set(0,0,0);
+
+    darts.push(dart);
+    scene.add(dart);
+}
+
+createDart();
 
 //balloon
 function createBalloon(color, position)
@@ -150,12 +170,6 @@ window.addEventListener('resize', onWindowResize, false);
 
 /* Lighting */
 
-//Assignment 3 exammple:
-/*
-let attachedObject = null;
-let blendingFactor = 0.1;
-*/
-
 const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(0, 20, 10);
 scene.add(light);
@@ -190,6 +204,8 @@ document.addEventListener('keydown', onKeyDown, false);
 
 /* Game Logic */
 
+function shootDart(direction) {};
+
 /* End Game Logic */
 
 
@@ -199,20 +215,37 @@ function animateBalloon(balloon, index) {
     balloon.position.y += Math.sin(time + index) * 0.01;
 }
 
+function translateDart(dart, speed) {
+    let time = clock.getElapsedTime();
+    dart.applyMatrix4(translationMatrix(0, 0, speed * time));
+    //TODO direction
+    //TODO gravity
+}
+
 /* End Animation Functions */
 
 
 /* Animate */
-
 function animate() {
     requestAnimationFrame(animate);
-    let time = clock.getElapsedTime();
-
+    time = clock.getElapsedTime();
+    delta = time - last;
+    last = time;
+    
     // TODO: Update sky color
 
     // TODO: Loop Balloons
     balloons.forEach((balloon, index) => animateBalloon(balloon, index));
     
+    // TODO: Loop Darts
+    //darts.forEach((dart) => translateDart(dart, 1));
+
+    darts.forEach((dart) =>  {
+        dart.applyMatrix4(rotationMatrixZ(delta * 1));
+        dart.applyMatrix4(rotationMatrixY(delta * 1));
+    });
+
+
         //disable controls
     // TODO: Animate Character
     // TODO: Move Camera
