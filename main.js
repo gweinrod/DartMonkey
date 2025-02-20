@@ -268,6 +268,14 @@ function onKeyUp(event) {
 }
 document.addEventListener('keyup', onKeyUp, false);
 
+//clear movement when window loses focus, or miss keyUp events, or miss spam keys
+window.addEventListener('blur', () => {
+    moves.W = false;
+    moves.A = false;
+    moves.S = false;
+    moves.D = false;
+});
+
 /* End Controls */
 
 
