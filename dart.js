@@ -51,11 +51,11 @@ static positions = new Float32Array([
     //right face
     DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //23
     0, 0, -DartGeometry.l, //24
-    -DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //25
+    DartGeometry.w, DartGeometry.w, DartGeometry.w - DartGeometry.l, //25
     //top face
     -DartGeometry.w, DartGeometry.w, DartGeometry.w - DartGeometry.l, //26
-    DartGeometry.w, DartGeometry.w, DartGeometry.w - DartGeometry.l, //27
-    0, 0, -DartGeometry.l, //28
+    0, 0, -DartGeometry.l, //27
+    DartGeometry.w, DartGeometry.w, DartGeometry.w - DartGeometry.l, //28
     //DartGeometry.left face
     -DartGeometry.w, -DartGeometry.w, DartGeometry.w - DartGeometry.l, //29
     0, 0, -DartGeometry.l, //30
@@ -117,9 +117,9 @@ static indices = [
     //right face
     23, 24, 25,
     //top face
-    26, 27, 28,
+    28, 27, 26,
     //left face
-    29, 30, 31,
+    31, 30, 29,
 
     // Fins are double sided
     //bottom fin
