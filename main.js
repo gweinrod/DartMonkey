@@ -149,6 +149,7 @@ function createBalloon(color, position)
 
     balloons.push(balloon);
     scene.add(balloon);
+    return balloon;
 }
 
 createBalloon(0x0000ff, { x: -20, y: 0, z: 0 });
@@ -267,6 +268,11 @@ function onKeyUp(event) {
     }
 }
 document.addEventListener('keyup', onKeyUp, false);
+
+//no right clicking browser menus
+document.querySelector('canvas').addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+}, false);
 
 //clear movement when window loses focus, or miss keyUp events, or miss spam keys
 window.addEventListener('blur', () => {
