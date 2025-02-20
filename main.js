@@ -216,11 +216,15 @@ window.addEventListener('resize', onWindowResize, false);
 
 /* Lighting */
 
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(0, 20, 10);
-scene.add(light);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+directionalLight.position.set(10, 20, 10);
+scene.add(directionalLight);
 
-const ambientLight = new THREE.AmbientLight(0x404040, 2);
+const pointLight = new THREE.PointLight(0xffffff, 0.5); 
+pointLight.position.set(10, 5, -5);
+scene.add(pointLight);
+
+const ambientLight = new THREE.AmbientLight(0x404040, 5);
 scene.add(ambientLight);
 
 /* End Lighting */
