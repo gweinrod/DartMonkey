@@ -94,8 +94,14 @@ let moves = {
     W: false,
     A: false,
     S: false,
-    D: false
+    D: false,
 };
+
+//physics elements for jumping
+let isJumping = false;
+let velocityY = 0;
+const GRAVITY = -30  ;  
+const JUMP_STRENGTH = 20;
 
 /* End Initializations */
 
@@ -248,6 +254,12 @@ function onKeyDown(event) {
             moves.D = true;
             break;
         //TODO JUMP
+        case 32: // 'SPACE' key
+            if (!isJumping) {
+                velocityY = JUMP_STRENGTH; // Apply jump force
+                isJumping = true;
+            }
+        break;
         //TODO UI Controls
     }
 }
@@ -268,10 +280,27 @@ function onKeyUp(event) {
             moves.D = false;
             break;
         //TODO JUMP
+        case 32: // 'SPACE' key
+            //isJumping = false;
+            break;
         //TODO UI Controls
     }
 }
 document.addEventListener('keyup', onKeyUp, false);
+
+//function to simulate a jump
+function updateJump() {
+    if (isJumping) {
+        velocityY += GRAVITY * delta;
+        camera.position.y += velocityY * delta;
+
+        if (camera.position.y <= 0) {
+            camera.position.y = 0;
+            velocityY = 0;
+            isJumping = false;
+        }
+    }
+}
 
 //no right clicking browser menus
 document.querySelector('canvas').addEventListener('contextmenu', (e) => {
@@ -352,7 +381,9 @@ function animate() {
     if (moves.A) camera.position.x -= MOVE_UNITS;
     if (moves.S) camera.position.z += MOVE_UNITS;
     if (moves.D) camera.position.x += MOVE_UNITS;
-    
+
+    updateJump();
+
     renderer.render(scene, camera);
 }
 animate();
