@@ -53,8 +53,6 @@ function scalingMatrix(sx, sy, sz) {
 	);
 }
 
-//shear
-
 //TODO: Custom Ballon Transformations
     //eg poppping
     //eg blown by wind 
@@ -73,6 +71,8 @@ const FOV = 60;
 const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1
 const FAR = WORLDSIZE;
+
+const BALLOON_RADIUS = 2;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(FOV, ASPECT, NEAR, FAR);
@@ -99,39 +99,51 @@ scene.add(sky);
 
 //player
 
+let dartGeom = new DartGeometry(3);
 //darts
 function createDart() {
-    let dartGeom = new DartGeometry(14);
     let dartMat = new THREE.MeshStandardMaterial({ color: 0xFF0000, roughness: 0.0, metalness: 0.5 });
     let dart = new THREE.Mesh(dartGeom, dartMat);
 
-    //dart.applyMatrix4(scalingMatrix(2,2,2));
-    dart.position.set(0,0,0);
+    dart.position.set(0,0,6);
 
     darts.push(dart);
     scene.add(dart);
+    return dart;
 }
 
-createDart();
+let rotator = createDart();
+let translator = createDart();
 
 //balloon
 function createBalloon(color, position)
 {
-    let balloonGeom = new THREE.SphereGeometry(2, 32, 32);
-    let scaling = scalingMatrix(1, 1.2, 1);
-    balloonGeom.applyMatrix4(scaling);
+    let balloonGeom = new THREE.SphereGeometry(BALLOON_RADIUS, 32, 32);
     let balloonMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.2 });
     let balloon = new THREE.Mesh(balloonGeom, balloonMat);
 
-    balloon.position.set(position.x, position.y, position.z);
+    //let scaling = scalingMatrix(1, 1.2, 1);
+    //balloonGeom.applyMatrix4(scaling);
+    //balloon.position.set(position.x, position.y, position.z);
+    
+        //use matrices for geometries, three.js calls for 
+    let transformations = new THREE.Matrix4();
+    transformations.multiplyMatrices(transformations, scalingMatrix(1, 1.2, 1));
+    transformations.multiplyMatrices(translationMatrix(position.x, position.y, position.z), transformations);
+    balloon.matrix.copy(transformations);
+    balloon.matrixAutoUpdate = false;
+
 
     balloons.push(balloon);
     scene.add(balloon);
 }
 
+createBalloon(0x0000ff, { x: -20, y: 0, z: 0 });
 createBalloon(0xff0000, { x: -10, y: 0, z: 0 });
 createBalloon(0x00ff00, { x: 0, y: 0, z: 0 });
 createBalloon(0x0000ff, { x: 10, y: 0, z: 0 });
+createBalloon(0x0000ff, { x: 20, y: 0, z: 0 });
+
 
 //details
 
@@ -146,7 +158,7 @@ createBalloon(0x0000ff, { x: 10, y: 0, z: 0 });
 
 /* Camera */
 
-camera.position.set(0, 0, 20);
+camera.position.set(0, 0, 50);
 camera.lookAt(0, 0, 0);
 
 /* End Camera */
@@ -215,15 +227,16 @@ function animateBalloon(balloon, index) {
     balloon.position.y += Math.sin(time + index) * 0.01;
 }
 
-function translateDart(dart, speed) {
-    let time = clock.getElapsedTime();
-    dart.applyMatrix4(translationMatrix(0, 0, speed * time));
+function translateDart(time, dart, speed) {
+    dart.applyMatrix4(translationMatrix((speed*time), speed*time/4, (speed*time)));
     //TODO direction
     //TODO gravity
 }
 
 /* End Animation Functions */
 
+//translator.applyMatrix4(scalingMatrix(1, -1, 1));
+translator.applyMatrix4(rotationMatrixY(-3*Math.PI/4));
 
 /* Animate */
 function animate() {
@@ -238,13 +251,20 @@ function animate() {
     balloons.forEach((balloon, index) => animateBalloon(balloon, index));
     
     // TODO: Loop Darts
-    //darts.forEach((dart) => translateDart(dart, 1));
 
-    darts.forEach((dart) =>  {
-        dart.applyMatrix4(rotationMatrixZ(delta * 1));
-        dart.applyMatrix4(rotationMatrixY(delta * 1));
-    });
+    //move dart 'translator' for delta seconds at speed = 20 pxls per second
+    translateDart(delta, translator, 20);
+    
+    //demo translate
+    if (Math.abs(translator.position.x) > 40 || Math.abs(translator.position.y) > 40 || Math.abs(translator.position.y) > 40) {
+        translator.position.x = 0;
+        translator.position.y = 0;
+        translator.position.z = 0;
+    }
 
+   //demo rotate
+        rotator.applyMatrix4(rotationMatrixZ(delta * 1));
+        rotator.applyMatrix4(rotationMatrixY(delta * 1));
 
         //disable controls
     // TODO: Animate Character

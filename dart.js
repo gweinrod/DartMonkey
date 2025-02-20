@@ -13,7 +13,7 @@ static w = 0.5 / DartGeometry.W_RATIO;
 static f = DartGeometry.w * (1 + DartGeometry.F_RATIO);
 //
 
-/* Vertices */
+/* Vertices */ 
 static positions = new Float32Array([
 
     // Body
