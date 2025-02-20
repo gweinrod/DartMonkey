@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 /* Transformations */
 
+
 //translate
 function translationMatrix(tx, ty, tz) {
 	return new THREE.Matrix4().set(
@@ -65,14 +66,13 @@ function scalingMatrix(sx, sy, sz) {
 /* Initializations */
 
 //constants
-const WORLDSIZE = 10000;
+const WORLDSIZE = 1000;
 const SKYBLUE = 0x8bdafc;
 
 const FOV = 60; 
 const ASPECT = window.innerWidth / window.innerHeight;
-const NEAR = 0.1
-const FAR = WORLDSIZE;
-
+const NEAR = 0.1;
+const FAR = WORLDSIZE * 1.5;
 const BALLOON_RADIUS = 2;
 
 const scene = new THREE.Scene();
@@ -128,7 +128,7 @@ function createBalloon(color, position)
     //balloonGeom.applyMatrix4(scaling);
     //balloon.position.set(position.x, position.y, position.z);
     
-        //use matrices for geometries, three.js calls for 
+        //use matrices for geometries, three.js calls for imports
     let transformations = new THREE.Matrix4();
     transformations.multiplyMatrices(transformations, scalingMatrix(1, 1.2, 1));
     transformations.multiplyMatrices(translationMatrix(position.x, position.y, position.z), transformations);
@@ -145,7 +145,6 @@ createBalloon(0xff0000, { x: -10, y: 0, z: 0 });
 createBalloon(0x00ff00, { x: 0, y: 0, z: 0 });
 createBalloon(0x0000ff, { x: 10, y: 0, z: 0 });
 createBalloon(0x0000ff, { x: 20, y: 0, z: 0 });
-
 
 //details
 
@@ -221,15 +220,19 @@ scene.add(ambientLight);
 function onKeyDown(event) {
     switch (event.keyCode) {
         case 87: // 'W' key
+            camera.position.z -= 1; //TODO
             break;
-        case 65: // 'A' key
+        case 65: // 'A' key 
+            camera.position.x -= 1; //TODO camera's left to world's left or tank controls / KEYBOARD TURN
             break;
         case 83: // 'S' key
+            camera.position.z += 1; //TODO
             break;
         case 68: // 'D' key
+            camera.position.x += 1; //TODO
             break;
-        //TODO Control Keys
-        //TODO ...
+        //TODO JUMP
+        //TODO UI Controls
     }
 }
 document.addEventListener('keydown', onKeyDown, false);
