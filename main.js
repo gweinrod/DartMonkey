@@ -241,7 +241,7 @@ function animate() {
     //darts.forEach((dart) => translateDart(dart, 1));
 
     darts.forEach((dart) =>  {
-        dart.applyMatrix4(rotationMatrixZ(delta * 1));
+        //dart.applyMatrix4(rotationMatrixZ(delta * 1));
         dart.applyMatrix4(rotationMatrixY(delta * 1));
     });
 
