@@ -74,7 +74,10 @@ const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 1.5;
 const BALLOON_RADIUS = 2;
+const MOVE_SPEED = 50;
+const MOVE_UNITS = .01 * MOVE_SPEED
 
+//objects
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(FOV, ASPECT, NEAR, FAR);
 
@@ -87,7 +90,15 @@ let time = 0;
 let delta = 0;
 let last = 0;
 
+let moves = {
+    W: false,
+    A: false,
+    S: false,
+    D: false
+};
+
 /* End Initializations */
+
 
 
 /* Geometries */
@@ -220,22 +231,42 @@ scene.add(ambientLight);
 function onKeyDown(event) {
     switch (event.keyCode) {
         case 87: // 'W' key
-            camera.position.z -= 1; //TODO
+            moves.W = true;
             break;
-        case 65: // 'A' key 
-            camera.position.x -= 1; //TODO camera's left to world's left or tank controls / KEYBOARD TURN
+        case 65: // 'A' key
+            moves.A = true;
             break;
         case 83: // 'S' key
-            camera.position.z += 1; //TODO
+            moves.S = true;
             break;
         case 68: // 'D' key
-            camera.position.x += 1; //TODO
+            moves.D = true;
             break;
         //TODO JUMP
         //TODO UI Controls
     }
 }
 document.addEventListener('keydown', onKeyDown, false);
+
+function onKeyUp(event) {
+    switch (event.keyCode) {
+        case 87: // 'W' key
+            moves.W = false;
+            break;
+        case 65: // 'A' key
+            moves.A = false;
+            break;
+        case 83: // 'S' key
+            moves.S = false;
+            break;
+        case 68: // 'D' key
+            moves.D = false;
+            break;
+        //TODO JUMP
+        //TODO UI Controls
+    }
+}
+document.addEventListener('keyup', onKeyUp, false);
 
 /* End Controls */
 
@@ -299,6 +330,11 @@ function animate() {
 
     // TODO: Apply Shaders
 
+    if (moves.W) camera.position.z -= MOVE_UNITS;
+    if (moves.A) camera.position.x -= MOVE_UNITS;
+    if (moves.S) camera.position.z += MOVE_UNITS;
+    if (moves.D) camera.position.x += MOVE_UNITS;
+    
     renderer.render(scene, camera);
 }
 animate();
