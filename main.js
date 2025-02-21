@@ -159,7 +159,7 @@ scene.add(sky);
 //player
 
 //cursor
-const cursorTexture = new THREE.TextureLoader().load("./images/cursor.png");
+const cursorTexture = new THREE.TextureLoader().load("./images/bananaret.png");
 const cursorMaterial = new THREE.SpriteMaterial({
     map: cursorTexture,
     // color: 0xffffff,
