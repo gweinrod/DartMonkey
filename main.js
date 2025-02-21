@@ -229,11 +229,26 @@ function createBalloon(color, position)
 }
 
 //demo balloons
-createBalloon(0x0000ff, { x: -20, y: 0, z: 0 });
-createBalloon(0xff0000, { x: -10, y: 0, z: 0 });
-createBalloon(0x00ff00, { x: 0, y: 0, z: 0 });
-createBalloon(0x0000ff, { x: 10, y: 0, z: 0 });
-createBalloon(0x0000ff, { x: 20, y: 0, z: 0 });
+
+const BALLOON_COLORS = {red:0xff0000, green: 0x10cc10, blue: 0x0000ff, yellow: 0xffff00, orange: 0xff7020, purple: 0xff00ff, white: 0xffffff, black:0x000000}
+
+createBalloon(BALLOON_COLORS.red, { x: -20, y: 0, z: 0 });
+createBalloon(BALLOON_COLORS.orange, { x: -10, y: 0, z: 0 });
+createBalloon(BALLOON_COLORS.yellow, { x: 0, y: 0, z: 0 });
+createBalloon(BALLOON_COLORS.green, { x: 10, y: 0, z: 0 });
+createBalloon(BALLOON_COLORS.blue, { x: 20, y: 0, z: 0 });
+
+createBalloon(BALLOON_COLORS.red, { x: -20, y: 5, z: 0 });
+createBalloon(BALLOON_COLORS.orange, { x: -10, y: 5, z: 0 });
+createBalloon(BALLOON_COLORS.yellow, { x: 0, y: 5, z: 0 });
+createBalloon(BALLOON_COLORS.green, { x: 10, y: 5, z: 0 });
+createBalloon(BALLOON_COLORS.blue, { x: 20, y: 5, z: 0 });
+
+createBalloon(BALLOON_COLORS.red, { x: -20, y: 10, z: 0 });
+createBalloon(BALLOON_COLORS.orange, { x: -10, y: 10, z: 0 });
+createBalloon(BALLOON_COLORS.yellow, { x: 0, y: 10, z: 0 });
+createBalloon(BALLOON_COLORS.green, { x: 10, y: 10, z: 0 });
+createBalloon(BALLOON_COLORS.blue, { x: 20, y: 10, z: 0 });
 
 //details
 
