@@ -13,7 +13,8 @@ const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 1.5;
 const BALLOON_RADIUS = 2;
-const DART_SPEED = -25; //along negative z
+const DART_SIZE = 2;
+const DART_SPEED = -50; //along negative z
 const MOVE_SPEED = 50;
 const MOVE_UNITS = .01 * MOVE_SPEED
 
@@ -62,6 +63,10 @@ function translationMatrix(tx, ty, tz) {
 		0, 0, 0, 1
 	)
 };
+
+function degreesToRadians(degrees) {
+    return ( Math.PI / 180 ) * degrees;
+}
 
 //rotateX
 function rotationMatrixX(theta) {
@@ -166,7 +171,7 @@ const cursorSprite = new THREE.Sprite(cursorMaterial);
 scene.add(cursorSprite);
 // camera.add(cursorSprite);
 
-let dartGeom = new DartGeometry(3);
+let dartGeom = new DartGeometry(DART_SIZE);
 //darts
 function createDart() {
     let dartMat = new THREE.MeshStandardMaterial({
@@ -489,8 +494,17 @@ function animateDart(dart, delta) {
     console.log("animating dart\n");
     let direction = new THREE.Vector3;
     dart.getWorldDirection(direction);
-    dart.applyMatrix4(translationMatrix((direction.x * DART_SPEED * delta), (direction.y * DART_SPEED * delta), (direction.z * DART_SPEED * delta)));
+    dart.applyMatrix4(translationMatrix(
+        (direction.x * DART_SPEED * delta), 
+        (direction.y * DART_SPEED * delta), 
+        (direction.z * DART_SPEED * delta)));
     
+    rotation_from_horizontal = Math.acos(dart.getWorldDirection)
+
+    //let gravity rotate down, clamping at 90 degrees total rotation
+    if (dart.rotation.x <= degreesToRadians(90)) {
+        dart.applyMatrix4(rotationMatrixX(GRAVITY * 1/100 * Math.PI * delta));
+    }
     //TODO gravity (let gravity act by rotating toward the ground)
     //dart.applyMatrix4(rotationMatrixX)
 };
