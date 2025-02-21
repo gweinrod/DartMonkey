@@ -13,7 +13,7 @@ const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 1.5;
 const BALLOON_RADIUS = 2;
-const DART_SPEED = 25;
+const DART_SPEED = -25; //along negative z
 const MOVE_SPEED = 50;
 const MOVE_UNITS = .01 * MOVE_SPEED
 
@@ -474,7 +474,7 @@ document.addEventListener("click", (e) => {
 
 function shootDart(direction) {
     let dart = createDart();
-    dart.lookAt(direction);
+    dart.rotation.copy(camera.rotation);
 };
 
 /* End Game Logic */
