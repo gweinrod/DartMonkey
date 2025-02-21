@@ -8,28 +8,56 @@ export default class Balloon {
         yellow: 0xffff00,
         orange: 0xff7020,
         purple: 0xff00ff,
+        pink: 0xffc0cb,
         white: 0xffffff,
         black: 0x000000,
     };
 
+    static TYPES = {
+        red: {
+            color: Balloon.COLORS.red,
+            speed: 3,
+            becomes: undefined,
+            size: 1,
+        },
+
+        blue: {
+            color: Balloon.COLORS.blue,
+            speed: 3.5,
+            size: 1,
+            becomes: "red",
+        },
+        green: {
+            color: Balloon.COLORS.green,
+            speed: 6,
+            size: 0.9,
+            becomes: "blue",
+        },
+        yellow: {
+            color: Balloon.COLORS.yellow,
+            speed: 8,
+            size: 1.1,
+            becomes: "green",
+        },
+        pink: {
+            color: Balloon.COLORS.pink,
+            speed: 11,
+
+            size: 0.75,
+            becomes: "yellow",
+        },
+    };
+
     randomOffset = Math.random() * 100;
 
-    radius = 2;
-    color = 0xff0000;
-    speed = 4;
+    static BASE_RADIUS = 2;
 
-    constructor({ color, position, waypoints, speed }, scene) {
-        this.color = color;
-        if (speed) this.speed = speed;
-        if (position) {
-            this.position = position;
-        } else if (waypoints) {
-            this.position = waypoints[0];
-        }
+    type = Balloon.TYPES.red;
 
-        this.geometry = new THREE.SphereGeometry(this.radius, 32, 32);
+    static generateBalloonGeometry(radius) {
+        const geometry = new THREE.SphereGeometry(radius, 32, 32);
 
-        const vertices = this.geometry.attributes.position;
+        const vertices = geometry.attributes.position;
 
         for (let i = 0; i < vertices.count; i++) {
             let x = vertices.getX(i);
@@ -46,16 +74,37 @@ export default class Balloon {
             }
         }
 
-        this.geometry.attributes.position.needsUpdate = true;
-        this.geometry.computeBoundingSphere();
+        geometry.attributes.position.needsUpdate = true;
+        geometry.computeBoundingSphere();
+
+        return geometry;
+    }
+
+    constructor({ color, position, waypoints, speed, type }, scene) {
+        if (color !== undefined) this.color = color;
+        if (type) {
+            this.type = type;
+            this.color = type.color;
+            this.speed = type.speed;
+            this.radius = type.size * Balloon.BASE_RADIUS;
+        }
+        if (speed) this.speed = speed;
+        if (position) {
+            this.position = position;
+        } else if (waypoints) {
+            this.position = waypoints[0];
+        }
 
         const balloonMat = new THREE.MeshStandardMaterial({
-            color: color,
+            color: this.color,
             roughness: 0.3,
             metalness: 0.2,
         });
 
-        this.balloon = new THREE.Mesh(this.geometry, balloonMat);
+        this.balloon = new THREE.Mesh(
+            Balloon.generateBalloonGeometry(this.radius),
+            balloonMat
+        );
 
         this.balloon.scale.set(1, 1.4, 1);
         if (position)
@@ -73,6 +122,25 @@ export default class Balloon {
         }
 
         scene.add(this.balloon);
+    }
+
+    pop() {
+        if (this.type.becomes) {
+            this.changeType(Balloon.TYPES[this.type.becomes]);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    changeType(type) {
+        this.type = type;
+        this.color = type.color;
+        this.speed = type.speed;
+        this.radius = type.size * Balloon.BASE_RADIUS;
+        this.balloon.geometry.dispose();
+        this.balloon.geometry = Balloon.generateBalloonGeometry(this.radius);
+        this.balloon.material.color.set(this.color);
     }
 
     animate(time, delta) {
@@ -101,11 +169,11 @@ export default class Balloon {
                     nextWaypoint.z
                 );
 
-                if (horizontalPosition.distanceTo(horizontalWaypoint) < 0.1) {
+                if (horizontalPosition.distanceTo(horizontalWaypoint) < 1) {
                     this.waypointIndex++;
-                    console.log("reached waypoint", this.waypointIndex);
+                    // console.log("reached waypoint", this.waypointIndex);
                     if (this.waypointIndex >= this.waypoints.length - 1) {
-                        console.log("reached last waypoint");
+                        // console.log("reached last waypoint");
                         // remove if reached last waypoint
                         return true;
                     }
