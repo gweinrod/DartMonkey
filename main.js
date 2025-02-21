@@ -1,6 +1,6 @@
-import * as THREE from 'three';
-import DartGeometry from './dart';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from "three";
+import DartGeometry from "./dart";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 /* Initializations */
 
@@ -51,7 +51,6 @@ const JUMP_STRENGTH = 20;
 /* End Initializations */
 
 /* Transformations */
-
 
 //translate
 function translationMatrix(tx, ty, tz) {
@@ -134,29 +133,47 @@ function shearMatrixZ(shx, shy) {
 };
 
 //TODO: Custom Ballon Transformations
-    //eg poppping
-    //eg blown by wind 
-    //eg bouncing
+//eg poppping
+//eg blown by wind
+//eg bouncing
 
 /* End Transformations */
-
 
 /* Geometries */
 
 //sky
 let skyGeom = new THREE.SphereGeometry(WORLDSIZE, 32, 32);
-let skyMat = new THREE.MeshStandardMaterial({color: SKYBLUE, side: THREE.BackSide});
+let skyMat = new THREE.MeshStandardMaterial({
+    color: SKYBLUE,
+    side: THREE.BackSide,
+});
 let sky = new THREE.Mesh(skyGeom, skyMat);
 scene.add(sky);
 
 //player
 
+//cursor
+const cursorTexture = new THREE.TextureLoader().load("./images/cursor.png");
+const cursorMaterial = new THREE.SpriteMaterial({
+    map: cursorTexture,
+    // color: 0xffffff,
+});
+cursorMaterial.depthTest = false;
+cursorMaterial.depthWrite = false;
+const cursorSprite = new THREE.Sprite(cursorMaterial);
+
+scene.add(cursorSprite);
+// camera.add(cursorSprite);
+
 let dartGeom = new DartGeometry(3);
 //darts
 function createDart() {
-    let dartMat = new THREE.MeshStandardMaterial({ color: 0xFF0000, roughness: 0.0, metalness: 0.5 });
+    let dartMat = new THREE.MeshStandardMaterial({
+        color: 0xff0000,
+        roughness: 0.0,
+        metalness: 0.5,
+    });
     let dart = new THREE.Mesh(dartGeom, dartMat);
-
     dart.position.copy(camera.position);
     darts.push(dart);
     scene.add(dart);
@@ -167,36 +184,39 @@ function createDart() {
 function createBalloon(color, position) 
 {
     let balloonGeom = new THREE.SphereGeometry(BALLOON_RADIUS, 32, 32);
-    let balloonMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.2 });
+    let balloonMat = new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: 0.3,
+        metalness: 0.2,
+    });
     let balloon = new THREE.Mesh(balloonGeom, balloonMat);
 
     let vertices = balloonGeom.attributes.position;
-    
-    for (let i = 0; i < vertices.count; i++) 
-        {
+
+    for (let i = 0; i < vertices.count; i++) {
         let x = vertices.getX(i);
         let y = vertices.getY(i);
         let z = vertices.getZ(i);
 
-        if (y <= 0) 
-        {
+        if (y <= 0) {
             let factor = 1 + y * 0.05;
             vertices.setX(i, x * factor);
             vertices.setZ(i, z * factor);
-            vertices.setY(i, y*0.95);
-        }
-        else if (y > 0) 
-        {
-            vertices.setY(i, y*0.8);
+            vertices.setY(i, y * 0.95);
+        } else if (y > 0) {
+            vertices.setY(i, y * 0.8);
         }
     }
 
     balloonGeom.attributes.position.needsUpdate = true;
-    
+
     //use matrices for geometries, three.js calls for imports
     let transformations = new THREE.Matrix4();
     transformations.multiplyMatrices(scalingMatrix(1, 1.4, 1), transformations);
-    transformations.multiplyMatrices(translationMatrix(position.x, position.y, position.z), transformations);
+    transformations.multiplyMatrices(
+        translationMatrix(position.x, position.y, position.z),
+        transformations
+    );
     balloon.matrix.copy(transformations);
     balloon.matrixAutoUpdate = false;
 
@@ -214,35 +234,37 @@ createBalloon(0x0000ff, { x: 20, y: 0, z: 0 });
 
 //details
 
-    //large trees and ground
-    const loader = new GLTFLoader();
-    loader.load('models/procedural_tree_generator/scene.gltf', function (gltf) {
+//large trees and ground
+const loader = new GLTFLoader();
+loader.load(
+    "models/procedural_tree_generator/scene.gltf",
+    function (gltf) {
         const tree = gltf.scene;
-    
+
         // Adjust position, scale, and rotation
         tree.position.set(0, -10, 0);
         tree.scale.set(5, 5, 5);
-        
+
         scene.add(tree);
-    
+
         // Clone trees after the model is loaded
         for (let i = 0; i < 1; i++) {
             //let treeClone = tree.clone();
             tree.position.set(10, -7, Math.random() * 10 - 5);
             scene.add(tree);
         }
-    
-    }, undefined, function (error) {
-        console.error('Error loading model:', error);
-    });
-    
+    },
+    undefined,
+    function (error) {
+        console.error("Error loading model:", error);
+    }
+);
 
-    //small tree
+//small tree
 
-    //rock
+//rock
 
 /* End Geometries */
-
 
 /* Camera */
 
@@ -251,22 +273,20 @@ camera.lookAt(0, 0, 0);
 
 /* End Camera */
 
-
 /* Renderer */
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
-window.addEventListener('resize', onWindowResize, false);
+window.addEventListener("resize", onWindowResize, false);
 
 /* End Renderer */
-
 
 /* Lighting */
 
@@ -274,7 +294,7 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
 directionalLight.position.set(10, 20, 10);
 scene.add(directionalLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 0.5); 
+const pointLight = new THREE.PointLight(0xffffff, 0.5);
 pointLight.position.set(10, 5, -5);
 scene.add(pointLight);
 
@@ -283,8 +303,9 @@ scene.add(ambientLight);
 
 /* End Lighting */
 
-
 /* Controls */
+
+const canvas = document.querySelector("canvas");
 
 //keycodes at https://www.toptal.com/developers/keycode/table search KeyW KeyA KeyS KeyD
 function onKeyDown(event) {
@@ -304,14 +325,14 @@ function onKeyDown(event) {
         //TODO JUMP
         case 32: // 'SPACE' key
             if (!isJumping) {
-                velocityY = JUMP_STRENGTH; // Apply jump force
+                playerProperties.velocity.y = JUMP_STRENGTH; // Apply jump force
                 isJumping = true;
             }
-        break;
+            break;
         //TODO UI Controls
     }
 }
-document.addEventListener('keydown', onKeyDown, false);
+document.addEventListener("keydown", onKeyDown, false);
 
 function onKeyUp(event) {
     switch (event.keyCode) {
@@ -334,26 +355,102 @@ function onKeyUp(event) {
         //TODO UI Controls
     }
 }
-document.addEventListener('keyup', onKeyUp, false);
+document.addEventListener("keyup", onKeyUp, false);
 
-//function to simulate a jump
-function updateJump() {
-    if (isJumping) {
-        velocityY += GRAVITY * delta;
-        camera.position.y += velocityY * delta;
+//mouse controls
 
-        if (camera.position.y <= 0) {
-            camera.position.y = 0;
-            velocityY = 0;
-            isJumping = false;
+canvas.addEventListener("click", () => {
+    canvas.requestPointerLock();
+});
+let cameraYaw = 0;
+let cameraPitch = 0;
+const sensitivity = 0.002;
+
+document.addEventListener("mousemove", (event) => {
+    if (document.pointerLockElement === canvas) {
+        cameraYaw -= event.movementX * sensitivity;
+        cameraPitch -= event.movementY * sensitivity;
+
+        // Quaternions prevent gimbal lock
+
+        cameraPitch = Math.max(
+            -Math.PI / 2,
+            Math.min(Math.PI / 2, cameraPitch)
+        );
+
+        const yawQuat = new THREE.Quaternion();
+        yawQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
+
+        const pitchQuat = new THREE.Quaternion();
+        pitchQuat.setFromAxisAngle(new THREE.Vector3(1, 0, 0), cameraPitch);
+
+        // global rotation for yaw, then local rotation for pitch
+        camera.quaternion.copy(yawQuat).multiply(pitchQuat);
+    }
+});
+
+const getYawFromQuaternion = (q) => {
+    const euler = new THREE.Euler();
+    // ensures Y extracted first (gimbal lock safe)
+    euler.setFromQuaternion(q, "YXZ");
+    return euler.y;
+};
+
+const updatePlayerMovement = () => {
+    const inputDirection = new THREE.Vector3();
+
+    const forward = new THREE.Vector3(0, 0, -1);
+    const right = new THREE.Vector3(1, 0, 0);
+    const cameraYaw = getYawFromQuaternion(camera.quaternion);
+    forward.applyEuler(new THREE.Euler(0, cameraYaw, 0));
+    right.applyEuler(new THREE.Euler(0, cameraYaw, 0));
+
+    if (moves.W) inputDirection.add(forward);
+    if (moves.A) inputDirection.addScaledVector(right, -1);
+    if (moves.S) inputDirection.addScaledVector(forward, -1);
+    if (moves.D) inputDirection.add(right);
+
+    const playerXZVelocity = new THREE.Vector3(
+        playerProperties.velocity.x,
+        0,
+        playerProperties.velocity.z
+    );
+
+    if (inputDirection.lengthSq() > 0) {
+        inputDirection.normalize();
+        playerXZVelocity.addScaledVector(
+            inputDirection,
+            playerProperties.ACCELERATION
+        );
+        playerXZVelocity.clampLength(0, playerProperties.MAX_XZ_SPEED);
+    } else {
+        playerXZVelocity.multiplyScalar(playerProperties.FRICTION);
+        if (playerXZVelocity.lengthSq() < 0.001) {
+            playerXZVelocity.set(0, 0, 0);
         }
     }
+
+    let playerYVelocity = playerProperties.velocity.y;
+
+    if (isJumping) {
+        playerYVelocity += GRAVITY * delta;
+    }
+
+    playerProperties.velocity.set(
+        playerXZVelocity.x,
+        playerYVelocity,
+        playerXZVelocity.z
+    );
 };
 
 //no right clicking browser menus
-document.querySelector('canvas').addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-}, false);
+canvas.addEventListener(
+    "contextmenu",
+    (e) => {
+        e.preventDefault();
+    },
+    false
+);
 
 //clear movement when window loses focus, or miss keyUp events
 window.addEventListener('blur', () => {
@@ -372,7 +469,6 @@ document.addEventListener("click", (e) => {
 
 /* End Controls */
 
-
 /* Game Logic */
 
 function shootDart(direction) {
@@ -381,7 +477,6 @@ function shootDart(direction) {
 };
 
 /* End Game Logic */
-
 
 /* Animation Functions */
 function animateBalloon(balloon, index) {
@@ -401,41 +496,52 @@ function animateDart(dart, delta) {
 
 /* End Animation Functions */
 
-
 /* Animate */
 function animate() {
     requestAnimationFrame(animate);
     time = clock.getElapsedTime();
     delta = time - last;
     last = time;
-    
+  
     // TODO: trig f'n modulate sky color based on elapsed
 
     // TODO: Loop Balloons
     balloons.forEach((balloon, index) => animateBalloon(balloon, index));
-    
+
     // TODO: Loop Darts
     darts.forEach((dart) => animateDart(dart, delta));
 
-        //disable controls
+    //disable controls
     // TODO: Animate Character
     // TODO: Move Camera
-        //enable controls
+
+    updatePlayerMovement();
+
+    const cameraVelocity = playerProperties.velocity.clone();
+    cameraVelocity.multiplyScalar(delta);
+    camera.position.add(cameraVelocity);
+
+    if (camera.position.y <= 0) {
+        camera.position.y = 0;
+        playerProperties.velocity.y = 0;
+        isJumping = false;
+    }
+
+    cursorSprite.position.copy(camera.position);
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+
+    // workaround for cursor sprite not working when added to camera (probably adds at corner of reticule not center)
+    cursorSprite.position.addScaledVector(cameraDirection, 9);
+
+    //enable controls
 
     // TODO: Apply Shaders
-
-    if (moves.W) camera.position.z -= MOVE_UNITS;
-    if (moves.A) camera.position.x -= MOVE_UNITS;
-    if (moves.S) camera.position.z += MOVE_UNITS;
-    if (moves.D) camera.position.x += MOVE_UNITS;
-
-    updateJump();
 
     renderer.render(scene, camera);
 }
 animate();
 
 /* End Animate */
-
 
 //EOF
