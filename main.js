@@ -13,6 +13,7 @@ const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 1.5;
 const BALLOON_RADIUS = 2;
+const FIRE_RATE = 10; //10ms
 const DART_COLOR = 0x555555
 const DART_SIZE = 3;
 const DART_SPEED = -60; //along negative z
@@ -26,9 +27,12 @@ const camera = new THREE.PerspectiveCamera(FOV, ASPECT, NEAR, FAR);
 let balloons = [];
 let darts = [];
 let clock = new THREE.Clock();
-let time = 0;
-let delta = 0;
-let last = 0;
+let time = 0;   //elapsed time
+let delta = 0;  //time since last animate
+let last = 0;   //time of last animate
+let felta = 0   //time since last dart fire
+let firing = false;
+let automatic = false;
 
 let moves = {
     W: false,
@@ -524,9 +528,20 @@ window.addEventListener('blur', () => {
 
 //mouse clicks
 document.addEventListener("click", (e) => {
-    let direction = new THREE.Vector3;
-    camera.getWorldDirection(direction);
-    shootDart(direction);
+    if (!firing) {
+        let direction = new THREE.Vector3;
+        camera.getWorldDirection(direction);
+        shootDart(direction);
+    }
+});
+
+//mouse hold
+document.addEventListener("mousedown", (e) => {
+    firing = true;
+});
+//mouse hold
+document.addEventListener("mouseup", (e) => {
+    firing = false;
 });
 
 /* End Controls */
@@ -589,6 +604,21 @@ function animate() {
     // TODO: Move Camera
 
     updatePlayerMovement();
+    
+    //engage automatic fire on long mouse hold
+    if (firing) {
+        felta += delta
+        if (felta >= 4*(1/FIRE_RATE)) automatic = true;
+    }
+
+    //automatic fire
+    if (automatic && felta >= 1/FIRE_RATE) {
+        let direction = new THREE.Vector3;
+        camera.getWorldDirection(direction);
+        shootDart(direction);
+        felta = 0;
+    }
+
 
     checkCollisions(darts, balloons);
 
