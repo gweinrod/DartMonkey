@@ -449,6 +449,39 @@ const updatePlayerMovement = () => {
     );
 };
 
+//collision detection
+function checkCollisions(darts, balloons) {
+    //loop through all darts
+    for (let i = darts.length - 1; i >= 0; i--) {
+        let dart = darts[i];
+
+        //loop through all balloons for each dart
+        for (let j = balloons.length - 1; j >= 0; j--) {
+            let balloon = balloons[j];
+
+            //get positions of each object
+            let dartPos = new THREE.Vector3();
+            dart.getWorldPosition(dartPos);
+            let balloonPos = new THREE.Vector3();
+            balloon.getWorldPosition(balloonPos);
+
+            //create bounding sphere to detect when the dart is on or inside it
+            let balloonVicinity = new THREE.Sphere(balloonPos, balloon.geometry.boundingSphere.radius);
+
+            //delete both dart and balloon if collision detected - can be changed to just delete balloon later?
+            if (balloonVicinity.containsPoint(dartPos)) {
+                console.log("collision detected: dart %d hit Balloon %d", i, j);
+                scene.remove(balloon);
+                balloons.splice(j, 1);
+                scene.remove(dart);
+                darts.splice(i, 1);
+                //stop checking once we do the removal
+                break;
+            }
+        }
+    }
+}
+
 //no right clicking browser menus
 canvas.addEventListener(
     "contextmenu",
@@ -531,6 +564,8 @@ function animate() {
     // TODO: Move Camera
 
     updatePlayerMovement();
+
+    checkCollisions(darts, balloons);
 
     const cameraVelocity = playerProperties.velocity.clone();
     cameraVelocity.multiplyScalar(delta);
