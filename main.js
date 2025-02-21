@@ -64,10 +64,6 @@ function translationMatrix(tx, ty, tz) {
 	)
 };
 
-function degreesToRadians(degrees) {
-    return ( Math.PI / 180 ) * degrees;
-}
-
 //rotateX
 function rotationMatrixX(theta) {
     return new THREE.Matrix4().set(
@@ -524,22 +520,24 @@ function animateBalloon(balloon, index) {
 };
 
 function animateDart(dart, delta) {
-    console.log("animating dart\n");
+
+    //pitch before yaw (though we don't yaw here, it's already yawed if not shot at <0,0,-1>)
+    let rotation = new THREE.Euler().setFromQuaternion(dart.quaternion, "YXZ");
+    rotation.x = THREE.MathUtils.clamp(
+        rotation.x + GRAVITY * 1/100 * Math.PI * delta,
+        -Math.PI / 2,
+        Math.PI / 2
+    );
+    dart.quaternion.setFromEuler(rotation);
+
     let direction = new THREE.Vector3;
     dart.getWorldDirection(direction);
     dart.applyMatrix4(translationMatrix(
         (direction.x * DART_SPEED * delta), 
         (direction.y * DART_SPEED * delta), 
-        (direction.z * DART_SPEED * delta)));
-    
-    rotation_from_horizontal = Math.acos(dart.getWorldDirection)
+        (direction.z * DART_SPEED * delta))
+    );
 
-    //let gravity rotate down, clamping at 90 degrees total rotation
-    if (dart.rotation.x <= degreesToRadians(90)) {
-        dart.applyMatrix4(rotationMatrixX(GRAVITY * 1/100 * Math.PI * delta));
-    }
-    //TODO gravity (let gravity act by rotating toward the ground)
-    //dart.applyMatrix4(rotationMatrixX)
 };
 
 /* End Animation Functions */
