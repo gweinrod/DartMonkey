@@ -1,97 +1,191 @@
-import * as THREE from 'three';
-import DartGeometry from './dart';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from "three";
+import DartGeometry from "./dart";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 /* Transformations */
 
-
 //translate
 function translationMatrix(tx, ty, tz) {
-	return new THREE.Matrix4().set(
-		1, 0, 0, tx,
-		0, 1, 0, ty,
-		0, 0, 1, tz,
-		0, 0, 0, 1
-	);
+    return new THREE.Matrix4().set(
+        1,
+        0,
+        0,
+        tx,
+        0,
+        1,
+        0,
+        ty,
+        0,
+        0,
+        1,
+        tz,
+        0,
+        0,
+        0,
+        1
+    );
 }
 
 //rotateX
 function rotationMatrixX(theta) {
     return new THREE.Matrix4().set(
-        1, 0, 0, 0,
-        0, Math.cos(theta), -Math.sin(theta), 0,
-        0, Math.sin(theta), Math.cos(theta), 0,
-        0, 0, 0, 1
+        1,
+        0,
+        0,
+        0,
+        0,
+        Math.cos(theta),
+        -Math.sin(theta),
+        0,
+        0,
+        Math.sin(theta),
+        Math.cos(theta),
+        0,
+        0,
+        0,
+        0,
+        1
     );
 }
 
 //rotateY
 function rotationMatrixY(theta) {
     return new THREE.Matrix4().set(
-        Math.cos(theta), 0, Math.sin(theta), 0,
-        0, 1, 0, 0,
-        -Math.sin(theta), 0, Math.cos(theta), 0,
-        0, 0, 0, 1
+        Math.cos(theta),
+        0,
+        Math.sin(theta),
+        0,
+        0,
+        1,
+        0,
+        0,
+        -Math.sin(theta),
+        0,
+        Math.cos(theta),
+        0,
+        0,
+        0,
+        0,
+        1
     );
 }
 
 //rotateZ
 function rotationMatrixZ(theta) {
-	return new THREE.Matrix4().set(
-		Math.cos(theta), -Math.sin(theta), 0, 0,
-		Math.sin(theta),  Math.cos(theta), 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	);
+    return new THREE.Matrix4().set(
+        Math.cos(theta),
+        -Math.sin(theta),
+        0,
+        0,
+        Math.sin(theta),
+        Math.cos(theta),
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+    );
 }
 
 //scale
 function scalingMatrix(sx, sy, sz) {
-	return new THREE.Matrix4().set(
-		sx, 0, 0, 0,
-		0, sy, 0, 0,
-		0, 0, sz, 0,
-		0, 0, 0, 1
-	);
+    return new THREE.Matrix4().set(
+        sx,
+        0,
+        0,
+        0,
+        0,
+        sy,
+        0,
+        0,
+        0,
+        0,
+        sz,
+        0,
+        0,
+        0,
+        0,
+        1
+    );
 }
 
 //shearX
 function shearMatrixX(shy, shz) {
-	return new THREE.Matrix4().set(
-		1, 0, 0, 0,
-		shy, 1, 0, 0,
-		shz, 0, 1, 0,
-		0, 0, 0, 1
-	);
+    return new THREE.Matrix4().set(
+        1,
+        0,
+        0,
+        0,
+        shy,
+        1,
+        0,
+        0,
+        shz,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+    );
 }
 
 //shearY
 function shearMatrixY(shx, shz) {
-	return new THREE.Matrix4().set(
-		1, shx, 0, 0,
-		0, 1, 0, 0,
-		0, shz, 1, 0,
-		0, 0, 0, 1
-	);
+    return new THREE.Matrix4().set(
+        1,
+        shx,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        shz,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+    );
 }
 
 //shearZ
 function shearMatrixZ(shx, shy) {
-	return new THREE.Matrix4().set(
-		1, 0, shx, 0,
-		0, 1, shy, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	);
+    return new THREE.Matrix4().set(
+        1,
+        0,
+        shx,
+        0,
+        0,
+        1,
+        shy,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+    );
 }
 
 //TODO: Custom Ballon Transformations
-    //eg poppping
-    //eg blown by wind 
-    //eg bouncing
+//eg poppping
+//eg blown by wind
+//eg bouncing
 
 /* End Transformations */
-
 
 /* Initializations */
 
@@ -99,13 +193,13 @@ function shearMatrixZ(shx, shy) {
 const WORLDSIZE = 1000;
 const SKYBLUE = 0x8bdafc;
 
-const FOV = 60; 
+const FOV = 60;
 const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 1.5;
 const BALLOON_RADIUS = 2;
 const MOVE_SPEED = 50;
-const MOVE_UNITS = .01 * MOVE_SPEED
+const MOVE_UNITS = 0.01 * MOVE_SPEED;
 
 //objects
 const scene = new THREE.Scene();
@@ -127,21 +221,29 @@ let moves = {
     D: false,
 };
 
+const playerProperties = {
+    velocity: new THREE.Vector3(0, 0, 0),
+    ACCELERATION: 5,
+    MAX_XZ_SPEED: 30,
+    FRICTION: 0.85,
+};
+
 //physics elements for jumping
 let isJumping = false;
 let velocityY = 0;
-const GRAVITY = -30  ;  
+const GRAVITY = -30;
 const JUMP_STRENGTH = 20;
 
 /* End Initializations */
-
-
 
 /* Geometries */
 
 //sky
 let skyGeom = new THREE.SphereGeometry(WORLDSIZE, 32, 32);
-let skyMat = new THREE.MeshStandardMaterial({color: SKYBLUE, side: THREE.BackSide});
+let skyMat = new THREE.MeshStandardMaterial({
+    color: SKYBLUE,
+    side: THREE.BackSide,
+});
 let sky = new THREE.Mesh(skyGeom, skyMat);
 scene.add(sky);
 
@@ -150,11 +252,15 @@ scene.add(sky);
 let dartGeom = new DartGeometry(3);
 //darts
 function createDart() {
-    let dartMat = new THREE.MeshStandardMaterial({ color: 0xFF0000, roughness: 0.0, metalness: 0.5 });
+    let dartMat = new THREE.MeshStandardMaterial({
+        color: 0xff0000,
+        roughness: 0.0,
+        metalness: 0.5,
+    });
     let dart = new THREE.Mesh(dartGeom, dartMat);
 
-    dart.applyMatrix4(scalingMatrix(0.5,0.5,0.5));
-    dart.position.set(0,-5,0);
+    dart.applyMatrix4(scalingMatrix(0.5, 0.5, 0.5));
+    dart.position.set(0, -5, 0);
 
     darts.push(dart);
     scene.add(dart);
@@ -170,7 +276,7 @@ let translator = createDart();
 //     let balloonGeom = new THREE.SphereGeometry(BALLOON_RADIUS, 32, 32);
 //     let balloonMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.2 });
 //     let balloon = new THREE.Mesh(balloonGeom, balloonMat);
-    
+
 //     //use matrices for geometries, three.js calls for imports
 //     let transformations = new THREE.Matrix4();
 //     transformations.multiplyMatrices(scalingMatrix(1, 1.2, 1), transformations);
@@ -185,39 +291,41 @@ let translator = createDart();
 //     return balloon;
 // }
 
-function createBalloon(color, position) 
-{
+function createBalloon(color, position) {
     let balloonGeom = new THREE.SphereGeometry(BALLOON_RADIUS, 32, 32);
-    let balloonMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.2 });
+    let balloonMat = new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: 0.3,
+        metalness: 0.2,
+    });
     let balloon = new THREE.Mesh(balloonGeom, balloonMat);
 
     let vertices = balloonGeom.attributes.position;
-    
-    for (let i = 0; i < vertices.count; i++) 
-        {
+
+    for (let i = 0; i < vertices.count; i++) {
         let x = vertices.getX(i);
         let y = vertices.getY(i);
         let z = vertices.getZ(i);
 
-        if (y <= 0) 
-        {
+        if (y <= 0) {
             let factor = 1 + y * 0.05;
             vertices.setX(i, x * factor);
             vertices.setZ(i, z * factor);
-            vertices.setY(i, y*0.95);
-        }
-        else if (y > 0) 
-        {
-            vertices.setY(i, y*0.8);
+            vertices.setY(i, y * 0.95);
+        } else if (y > 0) {
+            vertices.setY(i, y * 0.8);
         }
     }
 
     balloonGeom.attributes.position.needsUpdate = true;
-    
+
     //use matrices for geometries, three.js calls for imports
     let transformations = new THREE.Matrix4();
     transformations.multiplyMatrices(scalingMatrix(1, 1.4, 1), transformations);
-    transformations.multiplyMatrices(translationMatrix(position.x, position.y, position.z), transformations);
+    transformations.multiplyMatrices(
+        translationMatrix(position.x, position.y, position.z),
+        transformations
+    );
     balloon.matrix.copy(transformations);
     balloon.matrixAutoUpdate = false;
 
@@ -225,7 +333,6 @@ function createBalloon(color, position)
     scene.add(balloon);
     return balloon;
 }
-
 
 createBalloon(0x0000ff, { x: -20, y: 0, z: 0 });
 createBalloon(0xff0000, { x: -10, y: 0, z: 0 });
@@ -253,35 +360,37 @@ loader.load('models/balloon_00_free/scene.gltf', function (gltf) {
 
 //details
 
-    //large trees and ground
-    const loader = new GLTFLoader();
-    loader.load('models/procedural_tree_generator/scene.gltf', function (gltf) {
+//large trees and ground
+const loader = new GLTFLoader();
+loader.load(
+    "models/procedural_tree_generator/scene.gltf",
+    function (gltf) {
         const tree = gltf.scene;
-    
+
         // Adjust position, scale, and rotation
         tree.position.set(0, -10, 0);
         tree.scale.set(5, 5, 5);
-        
+
         scene.add(tree);
-    
+
         // Clone trees after the model is loaded
         for (let i = 0; i < 1; i++) {
             //let treeClone = tree.clone();
             tree.position.set(10, -7, Math.random() * 10 - 5);
             scene.add(tree);
         }
-    
-    }, undefined, function (error) {
-        console.error('Error loading model:', error);
-    });
-    
+    },
+    undefined,
+    function (error) {
+        console.error("Error loading model:", error);
+    }
+);
 
-    //small tree
+//small tree
 
-    //rock
+//rock
 
 /* End Geometries */
-
 
 /* Camera */
 
@@ -290,22 +399,20 @@ camera.lookAt(0, 0, 0);
 
 /* End Camera */
 
-
 /* Renderer */
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
-window.addEventListener('resize', onWindowResize, false);
+window.addEventListener("resize", onWindowResize, false);
 
 /* End Renderer */
-
 
 /* Lighting */
 
@@ -313,7 +420,7 @@ const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
 directionalLight.position.set(10, 20, 10);
 scene.add(directionalLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 0.5); 
+const pointLight = new THREE.PointLight(0xffffff, 0.5);
 pointLight.position.set(10, 5, -5);
 scene.add(pointLight);
 
@@ -322,8 +429,9 @@ scene.add(ambientLight);
 
 /* End Lighting */
 
-
 /* Controls */
+
+const canvas = document.querySelector("canvas");
 
 //keycodes at https://www.toptal.com/developers/keycode/table search KeyW KeyA KeyS KeyD
 function onKeyDown(event) {
@@ -343,14 +451,14 @@ function onKeyDown(event) {
         //TODO JUMP
         case 32: // 'SPACE' key
             if (!isJumping) {
-                velocityY = JUMP_STRENGTH; // Apply jump force
+                playerProperties.velocity.y = JUMP_STRENGTH; // Apply jump force
                 isJumping = true;
             }
-        break;
+            break;
         //TODO UI Controls
     }
 }
-document.addEventListener('keydown', onKeyDown, false);
+document.addEventListener("keydown", onKeyDown, false);
 
 function onKeyUp(event) {
     switch (event.keyCode) {
@@ -373,29 +481,105 @@ function onKeyUp(event) {
         //TODO UI Controls
     }
 }
-document.addEventListener('keyup', onKeyUp, false);
+document.addEventListener("keyup", onKeyUp, false);
 
-//function to simulate a jump
-function updateJump() {
-    if (isJumping) {
-        velocityY += GRAVITY * delta;
-        camera.position.y += velocityY * delta;
+//mouse controls
 
-        if (camera.position.y <= 0) {
-            camera.position.y = 0;
-            velocityY = 0;
-            isJumping = false;
+canvas.addEventListener("click", () => {
+    canvas.requestPointerLock();
+});
+let cameraYaw = 0;
+let cameraPitch = 0;
+const sensitivity = 0.002;
+
+document.addEventListener("mousemove", (event) => {
+    if (document.pointerLockElement === canvas) {
+        cameraYaw -= event.movementX * sensitivity;
+        cameraPitch -= event.movementY * sensitivity;
+
+        // Quaternions prevent gimbal lock
+
+        cameraPitch = Math.max(
+            -Math.PI / 2,
+            Math.min(Math.PI / 2, cameraPitch)
+        );
+
+        const yawQuat = new THREE.Quaternion();
+        yawQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
+
+        const pitchQuat = new THREE.Quaternion();
+        pitchQuat.setFromAxisAngle(new THREE.Vector3(1, 0, 0), cameraPitch);
+
+        // global rotation for yaw, then local rotation for pitch
+        camera.quaternion.copy(yawQuat).multiply(pitchQuat);
+    }
+});
+
+const getYawFromQuaternion = (q) => {
+    const euler = new THREE.Euler();
+    // ensures Y extracted first (gimbal lock safe)
+    euler.setFromQuaternion(q, "YXZ");
+    return euler.y;
+};
+
+const updatePlayerMovement = () => {
+    const inputDirection = new THREE.Vector3();
+
+    const forward = new THREE.Vector3(0, 0, -1);
+    const right = new THREE.Vector3(1, 0, 0);
+    const cameraYaw = getYawFromQuaternion(camera.quaternion);
+    forward.applyEuler(new THREE.Euler(0, cameraYaw, 0));
+    right.applyEuler(new THREE.Euler(0, cameraYaw, 0));
+
+    if (moves.W) inputDirection.add(forward);
+    if (moves.A) inputDirection.addScaledVector(right, -1);
+    if (moves.S) inputDirection.addScaledVector(forward, -1);
+    if (moves.D) inputDirection.add(right);
+
+    const playerXZVelocity = new THREE.Vector3(
+        playerProperties.velocity.x,
+        0,
+        playerProperties.velocity.z
+    );
+
+    if (inputDirection.lengthSq() > 0) {
+        inputDirection.normalize();
+        playerXZVelocity.addScaledVector(
+            inputDirection,
+            playerProperties.ACCELERATION
+        );
+        playerXZVelocity.clampLength(0, playerProperties.MAX_XZ_SPEED);
+    } else {
+        playerXZVelocity.multiplyScalar(playerProperties.FRICTION);
+        if (playerXZVelocity.lengthSq() < 0.001) {
+            playerXZVelocity.set(0, 0, 0);
         }
     }
-}
+
+    let playerYVelocity = playerProperties.velocity.y;
+
+    if (isJumping) {
+        playerYVelocity += GRAVITY * delta;
+    }
+
+    playerProperties.velocity.set(
+        playerXZVelocity.x,
+        playerYVelocity,
+        playerXZVelocity.z
+    );
+};
 
 //no right clicking browser menus
-document.querySelector('canvas').addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-}, false);
+canvas.addEventListener(
+    "contextmenu",
+    (e) => {
+        e.preventDefault();
+    },
+    false
+);
 
 //clear movement when window loses focus, or miss keyUp events, or miss spam keys
-window.addEventListener('blur', () => {
+window.addEventListener("blur", () => {
     moves.W = false;
     moves.A = false;
     moves.S = false;
@@ -404,13 +588,11 @@ window.addEventListener('blur', () => {
 
 /* End Controls */
 
-
 /* Game Logic */
 
-function shootDart(direction) {};
+function shootDart(direction) {}
 
 /* End Game Logic */
-
 
 /* Animation Functions */
 function animateBalloon(balloon, index) {
@@ -419,7 +601,9 @@ function animateBalloon(balloon, index) {
 }
 
 function translateDart(time, dart, speed) {
-    dart.applyMatrix4(translationMatrix((speed*time), speed*time/4, (speed*time)));
+    dart.applyMatrix4(
+        translationMatrix(speed * time, (speed * time) / 4, speed * time)
+    );
     //TODO direction
     //TODO gravity
 }
@@ -427,7 +611,7 @@ function translateDart(time, dart, speed) {
 /* End Animation Functions */
 
 //translator.applyMatrix4(scalingMatrix(1, -1, 1));
-translator.applyMatrix4(rotationMatrixY(-3*Math.PI/4));
+translator.applyMatrix4(rotationMatrixY((-3 * Math.PI) / 4));
 
 /* Animate */
 function animate() {
@@ -435,47 +619,56 @@ function animate() {
     time = clock.getElapsedTime();
     delta = time - last;
     last = time;
-    
+
     // TODO: Update sky color
 
     // TODO: Loop Balloons
     balloons.forEach((balloon, index) => animateBalloon(balloon, index));
-    
+
     // TODO: Loop Darts
 
     //move dart 'translator' for delta seconds at speed = 20 pxls per second
     translateDart(delta, translator, 20);
-    
+
     //demo translate
-    if (Math.abs(translator.position.x) > 40 || Math.abs(translator.position.y) > 40 || Math.abs(translator.position.y) > 40) {
+    if (
+        Math.abs(translator.position.x) > 40 ||
+        Math.abs(translator.position.y) > 40 ||
+        Math.abs(translator.position.y) > 40
+    ) {
         translator.position.x = 0;
         translator.position.y = 0;
         translator.position.z = 0;
     }
 
-   //demo rotate
-        rotator.applyMatrix4(rotationMatrixZ(delta * 1));
-        rotator.applyMatrix4(rotationMatrixY(delta * 1));
+    //demo rotate
+    rotator.applyMatrix4(rotationMatrixZ(delta * 1));
+    rotator.applyMatrix4(rotationMatrixY(delta * 1));
 
-        //disable controls
+    //disable controls
     // TODO: Animate Character
     // TODO: Move Camera
-        //enable controls
+
+    updatePlayerMovement();
+
+    const cameraVelocity = playerProperties.velocity.clone();
+    cameraVelocity.multiplyScalar(delta);
+    camera.position.add(cameraVelocity);
+
+    if (camera.position.y <= 0) {
+        camera.position.y = 0;
+        playerProperties.velocity.y = 0;
+        isJumping = false;
+    }
+
+    //enable controls
 
     // TODO: Apply Shaders
-
-    if (moves.W) camera.position.z -= MOVE_UNITS;
-    if (moves.A) camera.position.x -= MOVE_UNITS;
-    if (moves.S) camera.position.z += MOVE_UNITS;
-    if (moves.D) camera.position.x += MOVE_UNITS;
-
-    updateJump();
 
     renderer.render(scene, camera);
 }
 animate();
 
 /* End Animate */
-
 
 //EOF
