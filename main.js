@@ -13,10 +13,10 @@ const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 1.5;
 const BALLOON_RADIUS = 2;
-const DART_SIZE = 2;
-const DART_SPEED = -50; //along negative z
-const MOVE_SPEED = 50;
-const MOVE_UNITS = .01 * MOVE_SPEED
+const DART_COLOR = 0x555555
+const DART_SIZE = 3;
+const DART_SPEED = -60; //along negative z
+const DART_GRAVITY_SCALE = 1/250;
 
 //objects
 const scene = new THREE.Scene();
@@ -170,11 +170,12 @@ scene.add(cursorSprite);
 let dartGeom = new DartGeometry(DART_SIZE);
 //darts
 function createDart() {
-    let dartMat = new THREE.MeshStandardMaterial({
-        color: 0xff0000,
-        roughness: 0.0,
-        metalness: 0.5,
-    });
+    let dartMat = new THREE.MeshPhongMaterial({
+        color: DART_COLOR,
+        specular: 0x999999,
+        shininess: .90,
+        transparent: false  } );
+
     let dart = new THREE.Mesh(dartGeom, dartMat);
     dart.position.copy(camera.position);
     darts.push(dart);
@@ -524,7 +525,7 @@ function animateDart(dart, delta) {
     //pitch before yaw (though we don't yaw here, it's already yawed if not shot at <0,0,-1>)
     let rotation = new THREE.Euler().setFromQuaternion(dart.quaternion, "YXZ");
     rotation.x = THREE.MathUtils.clamp(
-        rotation.x + GRAVITY * 1/100 * Math.PI * delta,
+        rotation.x + GRAVITY * DART_GRAVITY_SCALE * Math.PI * delta,
         -Math.PI / 2,
         Math.PI / 2
     );
