@@ -465,15 +465,24 @@ const updatePlayerMovement = () => {
 function checkCollisions(darts, balloons) {
     //loop through all darts
     for (let i = darts.length - 1; i >= 0; i--) {
+
+        //get dart
         let dart = darts[i];
+        let dartPos = new THREE.Vector3();
+        dart.getWorldPosition(dartPos);
+
+        //remove out of bounds darts
+        if (!skyGeom.boundingSphere.containsPoint(dartPos)) {
+            scene.remove(dart);
+            darts.splice(i,1);
+            continue;
+        }
 
         //loop through all balloons for each dart
         for (let j = balloons.length - 1; j >= 0; j--) {
+           
+            //get balloon
             let balloon = balloons[j];
-
-            //get positions of each object
-            let dartPos = new THREE.Vector3();
-            dart.getWorldPosition(dartPos);
             let balloonPos = new THREE.Vector3();
             balloon.getWorldPosition(balloonPos);
 
@@ -488,8 +497,10 @@ function checkCollisions(darts, balloons) {
                 scene.remove(dart);
                 darts.splice(i, 1);
                 //stop checking once we do the removal
-                break;
+                //break;
             }
+
+            //TODO collide with tree and stick, remove dart from array (not scene)
         }
     }
 }
