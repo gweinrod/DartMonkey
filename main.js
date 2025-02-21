@@ -2,211 +2,26 @@ import * as THREE from "three";
 import DartGeometry from "./dart";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-/* Transformations */
-
-//translate
-function translationMatrix(tx, ty, tz) {
-    return new THREE.Matrix4().set(
-        1,
-        0,
-        0,
-        tx,
-        0,
-        1,
-        0,
-        ty,
-        0,
-        0,
-        1,
-        tz,
-        0,
-        0,
-        0,
-        1
-    );
-}
-
-//rotateX
-function rotationMatrixX(theta) {
-    return new THREE.Matrix4().set(
-        1,
-        0,
-        0,
-        0,
-        0,
-        Math.cos(theta),
-        -Math.sin(theta),
-        0,
-        0,
-        Math.sin(theta),
-        Math.cos(theta),
-        0,
-        0,
-        0,
-        0,
-        1
-    );
-}
-
-//rotateY
-function rotationMatrixY(theta) {
-    return new THREE.Matrix4().set(
-        Math.cos(theta),
-        0,
-        Math.sin(theta),
-        0,
-        0,
-        1,
-        0,
-        0,
-        -Math.sin(theta),
-        0,
-        Math.cos(theta),
-        0,
-        0,
-        0,
-        0,
-        1
-    );
-}
-
-//rotateZ
-function rotationMatrixZ(theta) {
-    return new THREE.Matrix4().set(
-        Math.cos(theta),
-        -Math.sin(theta),
-        0,
-        0,
-        Math.sin(theta),
-        Math.cos(theta),
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1
-    );
-}
-
-//scale
-function scalingMatrix(sx, sy, sz) {
-    return new THREE.Matrix4().set(
-        sx,
-        0,
-        0,
-        0,
-        0,
-        sy,
-        0,
-        0,
-        0,
-        0,
-        sz,
-        0,
-        0,
-        0,
-        0,
-        1
-    );
-}
-
-//shearX
-function shearMatrixX(shy, shz) {
-    return new THREE.Matrix4().set(
-        1,
-        0,
-        0,
-        0,
-        shy,
-        1,
-        0,
-        0,
-        shz,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1
-    );
-}
-
-//shearY
-function shearMatrixY(shx, shz) {
-    return new THREE.Matrix4().set(
-        1,
-        shx,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        shz,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1
-    );
-}
-
-//shearZ
-function shearMatrixZ(shx, shy) {
-    return new THREE.Matrix4().set(
-        1,
-        0,
-        shx,
-        0,
-        0,
-        1,
-        shy,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1
-    );
-}
-
-//TODO: Custom Ballon Transformations
-//eg poppping
-//eg blown by wind
-//eg bouncing
-
-/* End Transformations */
-
 /* Initializations */
 
 //constants
 const WORLDSIZE = 1000;
 const SKYBLUE = 0x8bdafc;
 
-const FOV = 60;
+const FOV = 60; 
 const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 1.5;
 const BALLOON_RADIUS = 2;
+const DART_SPEED = 25;
 const MOVE_SPEED = 50;
-const MOVE_UNITS = 0.01 * MOVE_SPEED;
+const MOVE_UNITS = .01 * MOVE_SPEED
 
 //objects
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(FOV, ASPECT, NEAR, FAR);
 
 //variables
-let players = [];
 let balloons = [];
 let darts = [];
 let clock = new THREE.Clock();
@@ -221,20 +36,108 @@ let moves = {
     D: false,
 };
 
-const playerProperties = {
-    velocity: new THREE.Vector3(0, 0, 0),
-    ACCELERATION: 5,
-    MAX_XZ_SPEED: 30,
-    FRICTION: 0.85,
+let mouse = {
+    x:0,
+    y:0,
+    z:0
 };
 
 //physics elements for jumping
 let isJumping = false;
 let velocityY = 0;
-const GRAVITY = -30;
+const GRAVITY = -30  ;  
 const JUMP_STRENGTH = 20;
 
 /* End Initializations */
+
+/* Transformations */
+
+//translate
+function translationMatrix(tx, ty, tz) {
+	return new THREE.Matrix4().set(
+		1, 0, 0, tx,
+		0, 1, 0, ty,
+		0, 0, 1, tz,
+		0, 0, 0, 1
+	)
+};
+
+//rotateX
+function rotationMatrixX(theta) {
+    return new THREE.Matrix4().set(
+        1, 0, 0, 0,
+        0, Math.cos(theta), -Math.sin(theta), 0,
+        0, Math.sin(theta), Math.cos(theta), 0,
+        0, 0, 0, 1
+    )
+};
+
+//rotateY
+function rotationMatrixY(theta) {
+    return new THREE.Matrix4().set(
+        Math.cos(theta), 0, Math.sin(theta), 0,
+        0, 1, 0, 0,
+        -Math.sin(theta), 0, Math.cos(theta), 0,
+        0, 0, 0, 1
+    )
+};
+
+//rotateZ
+function rotationMatrixZ(theta) {
+	return new THREE.Matrix4().set(
+		Math.cos(theta), -Math.sin(theta), 0, 0,
+		Math.sin(theta),  Math.cos(theta), 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	)
+};
+
+//scale
+function scalingMatrix(sx, sy, sz) {
+	return new THREE.Matrix4().set(
+		sx, 0, 0, 0,
+		0, sy, 0, 0,
+		0, 0, sz, 0,
+		0, 0, 0, 1
+	)
+};
+
+//shearX
+function shearMatrixX(shy, shz) {
+	return new THREE.Matrix4().set(
+		1, 0, 0, 0,
+		shy, 1, 0, 0,
+		shz, 0, 1, 0,
+		0, 0, 0, 1
+	)
+};
+
+//shearY
+function shearMatrixY(shx, shz) {
+	return new THREE.Matrix4().set(
+		1, shx, 0, 0,
+		0, 1, 0, 0,
+		0, shz, 1, 0,
+		0, 0, 0, 1
+	)
+};
+
+//shearZ
+function shearMatrixZ(shx, shy) {
+	return new THREE.Matrix4().set(
+		1, 0, shx, 0,
+		0, 1, shy, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	)
+};
+
+//TODO: Custom Ballon Transformations
+//eg poppping
+//eg blown by wind
+//eg bouncing
+
+/* End Transformations */
 
 /* Geometries */
 
@@ -271,40 +174,15 @@ function createDart() {
         metalness: 0.5,
     });
     let dart = new THREE.Mesh(dartGeom, dartMat);
-
-    dart.applyMatrix4(scalingMatrix(0.5, 0.5, 0.5));
-    dart.position.set(0, -5, 0);
-
+    dart.position.copy(camera.position);
     darts.push(dart);
     scene.add(dart);
+    console.log("dart created\n")
     return dart;
 }
 
-let rotator = createDart();
-let translator = createDart();
-
-//balloon
-// function createBalloon(color, position)
-// {
-//     let balloonGeom = new THREE.SphereGeometry(BALLOON_RADIUS, 32, 32);
-//     let balloonMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.3, metalness: 0.2 });
-//     let balloon = new THREE.Mesh(balloonGeom, balloonMat);
-
-//     //use matrices for geometries, three.js calls for imports
-//     let transformations = new THREE.Matrix4();
-//     transformations.multiplyMatrices(scalingMatrix(1, 1.2, 1), transformations);
-//     //transformations.multiplyMatrices(shearMatrixY(0.2, 0), transformations);
-//     transformations.multiplyMatrices(scalingMatrix(0.9, 1, 1), transformations);
-//     transformations.multiplyMatrices(translationMatrix(position.x, position.y, position.z), transformations);
-//     balloon.matrix.copy(transformations);
-//     balloon.matrixAutoUpdate = false;
-
-//     balloons.push(balloon);
-//     scene.add(balloon);
-//     return balloon;
-// }
-
-function createBalloon(color, position) {
+function createBalloon(color, position) 
+{
     let balloonGeom = new THREE.SphereGeometry(BALLOON_RADIUS, 32, 32);
     let balloonMat = new THREE.MeshStandardMaterial({
         color: color,
@@ -347,29 +225,12 @@ function createBalloon(color, position) {
     return balloon;
 }
 
+//demo balloons
 createBalloon(0x0000ff, { x: -20, y: 0, z: 0 });
 createBalloon(0xff0000, { x: -10, y: 0, z: 0 });
 createBalloon(0x00ff00, { x: 0, y: 0, z: 0 });
 createBalloon(0x0000ff, { x: 10, y: 0, z: 0 });
 createBalloon(0x0000ff, { x: 20, y: 0, z: 0 });
-
-//imported geometry balloons
-/*const loader = new GLTFLoader();
-loader.load('models/balloon_00_free/scene.gltf', function (gltf) {
-    const balloon_model = gltf.scene;
-    
-    // Adjust position, scale, and rotation
-    balloon_model.position.set(0, -10, 0);
-    balloon_model.scale.set(1, 1, 1);
-        
-    scene.add(balloon_model);
-    
-    balloon_model.position.set(0, 0, 0);
-    scene.add(balloon_model);
-    
-}, undefined, function (error) {
-    console.error('Error loading model:', error);
-});*/
 
 //details
 
@@ -591,19 +452,29 @@ canvas.addEventListener(
     false
 );
 
-//clear movement when window loses focus, or miss keyUp events, or miss spam keys
-window.addEventListener("blur", () => {
+//clear movement when window loses focus, or miss keyUp events
+window.addEventListener('blur', () => {
     moves.W = false;
     moves.A = false;
     moves.S = false;
     moves.D = false;
 });
 
+//mouse clicks
+document.addEventListener("click", (e) => {
+    let direction = new THREE.Vector3;
+    camera.getWorldDirection(direction);
+    shootDart(direction);
+});
+
 /* End Controls */
 
 /* Game Logic */
 
-function shootDart(direction) {}
+function shootDart(direction) {
+    let dart = createDart();
+    dart.lookAt(direction);
+};
 
 /* End Game Logic */
 
@@ -611,20 +482,19 @@ function shootDart(direction) {}
 function animateBalloon(balloon, index) {
     let time = clock.getElapsedTime();
     balloon.position.y += Math.sin(time + index) * 0.01;
-}
+};
 
-function translateDart(time, dart, speed) {
-    dart.applyMatrix4(
-        translationMatrix(speed * time, (speed * time) / 4, speed * time)
-    );
-    //TODO direction
-    //TODO gravity
-}
+function animateDart(dart, delta) {
+    console.log("animating dart\n");
+    let direction = new THREE.Vector3;
+    dart.getWorldDirection(direction);
+    dart.applyMatrix4(translationMatrix((direction.x * DART_SPEED * delta), (direction.y * DART_SPEED * delta), (direction.z * DART_SPEED * delta)));
+    
+    //TODO gravity (let gravity act by rotating toward the ground)
+    //dart.applyMatrix4(rotationMatrixX)
+};
 
 /* End Animation Functions */
-
-//translator.applyMatrix4(scalingMatrix(1, -1, 1));
-translator.applyMatrix4(rotationMatrixY((-3 * Math.PI) / 4));
 
 /* Animate */
 function animate() {
@@ -632,31 +502,14 @@ function animate() {
     time = clock.getElapsedTime();
     delta = time - last;
     last = time;
-
-    // TODO: Update sky color
+  
+    // TODO: trig f'n modulate sky color based on elapsed
 
     // TODO: Loop Balloons
     balloons.forEach((balloon, index) => animateBalloon(balloon, index));
 
     // TODO: Loop Darts
-
-    //move dart 'translator' for delta seconds at speed = 20 pxls per second
-    translateDart(delta, translator, 20);
-
-    //demo translate
-    if (
-        Math.abs(translator.position.x) > 40 ||
-        Math.abs(translator.position.y) > 40 ||
-        Math.abs(translator.position.y) > 40
-    ) {
-        translator.position.x = 0;
-        translator.position.y = 0;
-        translator.position.z = 0;
-    }
-
-    //demo rotate
-    rotator.applyMatrix4(rotationMatrixZ(delta * 1));
-    rotator.applyMatrix4(rotationMatrixY(delta * 1));
+    darts.forEach((dart) => animateDart(dart, delta));
 
     //disable controls
     // TODO: Animate Character
@@ -678,7 +531,7 @@ function animate() {
     const cameraDirection = new THREE.Vector3();
     camera.getWorldDirection(cameraDirection);
 
-    // workaround for cursor sprite not working when added to camera
+    // workaround for cursor sprite not working when added to camera (probably adds at corner of reticule not center)
     cursorSprite.position.addScaledVector(cameraDirection, 9);
 
     //enable controls
