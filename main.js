@@ -551,6 +551,7 @@ document.addEventListener("mouseup", (e) => {
 function shootDart(direction) {
     let dart = createDart();
     dart.rotation.copy(camera.rotation);
+    dart.translateZ(-4);
 };
 
 /* End Game Logic */
