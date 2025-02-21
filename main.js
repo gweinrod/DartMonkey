@@ -249,6 +249,19 @@ scene.add(sky);
 
 //player
 
+//cursor
+const cursorTexture = new THREE.TextureLoader().load("./images/cursor.png");
+const cursorMaterial = new THREE.SpriteMaterial({
+    map: cursorTexture,
+    // color: 0xffffff,
+});
+cursorMaterial.depthTest = false;
+cursorMaterial.depthWrite = false;
+const cursorSprite = new THREE.Sprite(cursorMaterial);
+
+scene.add(cursorSprite);
+// camera.add(cursorSprite);
+
 let dartGeom = new DartGeometry(3);
 //darts
 function createDart() {
@@ -660,6 +673,13 @@ function animate() {
         playerProperties.velocity.y = 0;
         isJumping = false;
     }
+
+    cursorSprite.position.copy(camera.position);
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+
+    // workaround for cursor sprite not working when added to camera
+    cursorSprite.position.addScaledVector(cameraDirection, 9);
 
     //enable controls
 
