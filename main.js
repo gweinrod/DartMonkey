@@ -1,5 +1,7 @@
 import * as THREE from "three";
-import DartGeometry from "./dart";
+import Dart from "./dart";
+import Balloon from "./balloon";
+import { scalingMatrix, translationMatrix } from "./transformations";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 /* Initializations */
@@ -8,16 +10,21 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 const WORLDSIZE = 1000;
 const SKYBLUE = 0x8bdafc;
 
-const FOV = 60; 
+const FOV = 60;
 const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 1.5;
 const BALLOON_RADIUS = 2;
 const FIRE_RATE = 5; //darts per second
-const DART_COLOR = 0x555555
+const DART_COLOR = 0x555555;
 const DART_SIZE = 3;
 const DART_SPEED = -60; //along negative z
-const DART_GRAVITY_SCALE = 1/250;
+const DART_GRAVITY_SCALE = 1 / 250;
+
+const DART_STATES = {
+    flying: 0,
+    stuck: 1,
+};
 
 //objects
 const scene = new THREE.Scene();
@@ -27,10 +34,10 @@ const camera = new THREE.PerspectiveCamera(FOV, ASPECT, NEAR, FAR);
 let balloons = [];
 let darts = [];
 let clock = new THREE.Clock();
-let time = 0;   //elapsed time
-let delta = 0;  //time since last animate
-let last = 0;   //time of last animate
-let felta = 0   //time since last dart fire
+let time = 0; //elapsed time
+let delta = 0; //time since last animate
+let last = 0; //time of last animate
+let felta = 0; //time since last dart fire
 let firing = false;
 let automatic = false;
 
@@ -51,97 +58,12 @@ const playerProperties = {
 //physics elements for jumping
 let isJumping = 0;
 let velocityY = 0;
-const GRAVITY = -30  ;  
+const GRAVITY = -30;
 const JUMP_STRENGTH = 20;
 
 /* End Initializations */
 
 /* Transformations */
-
-//translate
-function translationMatrix(tx, ty, tz) {
-	return new THREE.Matrix4().set(
-		1, 0, 0, tx,
-		0, 1, 0, ty,
-		0, 0, 1, tz,
-		0, 0, 0, 1
-	)
-};
-
-//rotateX
-function rotationMatrixX(theta) {
-    return new THREE.Matrix4().set(
-        1, 0, 0, 0,
-        0, Math.cos(theta), -Math.sin(theta), 0,
-        0, Math.sin(theta), Math.cos(theta), 0,
-        0, 0, 0, 1
-    )
-};
-
-//rotateY
-function rotationMatrixY(theta) {
-    return new THREE.Matrix4().set(
-        Math.cos(theta), 0, Math.sin(theta), 0,
-        0, 1, 0, 0,
-        -Math.sin(theta), 0, Math.cos(theta), 0,
-        0, 0, 0, 1
-    )
-};
-
-//rotateZ
-function rotationMatrixZ(theta) {
-	return new THREE.Matrix4().set(
-		Math.cos(theta), -Math.sin(theta), 0, 0,
-		Math.sin(theta),  Math.cos(theta), 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	)
-};
-
-//scale
-function scalingMatrix(sx, sy, sz) {
-	return new THREE.Matrix4().set(
-		sx, 0, 0, 0,
-		0, sy, 0, 0,
-		0, 0, sz, 0,
-		0, 0, 0, 1
-	)
-};
-
-//shearX
-function shearMatrixX(shy, shz) {
-	return new THREE.Matrix4().set(
-		1, 0, 0, 0,
-		shy, 1, 0, 0,
-		shz, 0, 1, 0,
-		0, 0, 0, 1
-	)
-};
-
-//shearY
-function shearMatrixY(shx, shz) {
-	return new THREE.Matrix4().set(
-		1, shx, 0, 0,
-		0, 1, 0, 0,
-		0, shz, 1, 0,
-		0, 0, 0, 1
-	)
-};
-
-//shearZ
-function shearMatrixZ(shx, shy) {
-	return new THREE.Matrix4().set(
-		1, 0, shx, 0,
-		0, 1, shy, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	)
-};
-
-//TODO: Custom Ballon Transformations
-//eg poppping
-//eg blown by wind
-//eg bouncing
 
 /* End Transformations */
 
@@ -171,88 +93,24 @@ const cursorSprite = new THREE.Sprite(cursorMaterial);
 scene.add(cursorSprite);
 // camera.add(cursorSprite);
 
-let dartGeom = new DartGeometry(DART_SIZE);
-//darts
-function createDart() {
-    let dartMat = new THREE.MeshPhongMaterial({
-        color: DART_COLOR,
-        specular: 0x999999,
-        shininess: .90,
-        transparent: false  } );
-
-    let dart = new THREE.Mesh(dartGeom, dartMat);
-    dart.position.copy(camera.position);
-    darts.push(dart);
-    scene.add(dart);
-    console.log("dart created\n")
-    return dart;
+function createBalloon(color, position) {
+    balloons.push(new Balloon({ color, position }, scene));
 }
-
-let balloonGeom = new THREE.SphereGeometry(BALLOON_RADIUS, 32, 32);
-let vertices = balloonGeom.attributes.position;
-
-for (let i = 0; i < vertices.count; i++) {
-    let x = vertices.getX(i);
-    let y = vertices.getY(i);
-    let z = vertices.getZ(i);
-
-    if (y <= 0) {
-        let factor = 1 + y * 0.05;
-        vertices.setX(i, x * factor);
-        vertices.setZ(i, z * factor);
-        vertices.setY(i, y * 0.95);
-    } else if (y > 0) {
-        vertices.setY(i, y * 0.8);
-    }
-}
-
-balloonGeom.attributes.position.needsUpdate = true;
-
-function createBalloon(color, position) 
-{
-    let balloonMat = new THREE.MeshStandardMaterial({
-        color: color,
-        roughness: 0.3,
-        metalness: 0.2,
-    });
-    let balloon = new THREE.Mesh(balloonGeom, balloonMat);
-
-    //use matrices for geometries, three.js calls for imports
-    let transformations = new THREE.Matrix4();
-    transformations.multiplyMatrices(scalingMatrix(1, 1.4, 1), transformations);
-    transformations.multiplyMatrices(
-        translationMatrix(position.x, position.y, position.z),
-        transformations
-    );
-    balloon.matrix.copy(transformations);
-    balloon.matrixAutoUpdate = false;
-
-    balloons.push(balloon);
-    scene.add(balloon);
-    return balloon;
+function createBalloonWithWaypoints(color, waypoints) {
+    balloons.push(new Balloon({ color, waypoints }, scene));
 }
 
 //demo balloons
-
-const BALLOON_COLORS = {red:0xff0000, green: 0x10cc10, blue: 0x0000ff, yellow: 0xffff00, orange: 0xff7020, purple: 0xff00ff, white: 0xffffff, black:0x000000}
-
-createBalloon(BALLOON_COLORS.red, { x: -20, y: 0, z: 0 });
-createBalloon(BALLOON_COLORS.orange, { x: -10, y: 0, z: 0 });
-createBalloon(BALLOON_COLORS.yellow, { x: 0, y: 0, z: 0 });
-createBalloon(BALLOON_COLORS.green, { x: 10, y: 0, z: 0 });
-createBalloon(BALLOON_COLORS.blue, { x: 20, y: 0, z: 0 });
-
-createBalloon(BALLOON_COLORS.red, { x: -20, y: 5, z: 0 });
-createBalloon(BALLOON_COLORS.orange, { x: -10, y: 5, z: 0 });
-createBalloon(BALLOON_COLORS.yellow, { x: 0, y: 5, z: 0 });
-createBalloon(BALLOON_COLORS.green, { x: 10, y: 5, z: 0 });
-createBalloon(BALLOON_COLORS.blue, { x: 20, y: 5, z: 0 });
-
-createBalloon(BALLOON_COLORS.red, { x: -20, y: 10, z: 0 });
-createBalloon(BALLOON_COLORS.orange, { x: -10, y: 10, z: 0 });
-createBalloon(BALLOON_COLORS.yellow, { x: 0, y: 10, z: 0 });
-createBalloon(BALLOON_COLORS.green, { x: 10, y: 10, z: 0 });
-createBalloon(BALLOON_COLORS.blue, { x: 20, y: 10, z: 0 });
+let balloon_demo_x = -20;
+for (const color in Balloon.COLORS) {
+    for (let i = 0; i <= 20; i += 10) {
+        createBalloon(
+            Balloon.COLORS[color],
+            new THREE.Vector3(balloon_demo_x, i, 0)
+        );
+    }
+    balloon_demo_x += 10;
+}
 
 //details
 
@@ -348,7 +206,7 @@ function onKeyDown(event) {
         case 32: // 'SPACE' key
             if (isJumping <= 1) {
                 playerProperties.velocity.y = JUMP_STRENGTH; // Apply jump force
-                isJumping ++;
+                isJumping++;
             }
             break;
         //TODO UI Controls
@@ -469,33 +327,34 @@ const updatePlayerMovement = () => {
 function checkCollisions(darts, balloons) {
     //loop through all darts
     for (let i = darts.length - 1; i >= 0; i--) {
-
         //get dart
-        let dart = darts[i];
+        const dart = darts[i].dart;
         let dartPos = new THREE.Vector3();
         let dartDir = new THREE.Vector3();
         dart.getWorldPosition(dartPos);
         dart.getWorldDirection(dartDir);
         dartDir.normalize();
-        dartPos = dartPos.add(dartDir.multiplyScalar(DART_SIZE/2)); //tip of dart
+        dartPos = dartPos.add(dartDir.multiplyScalar(DART_SIZE / 2)); //tip of dart
 
         //remove out of bounds darts
         if (!skyGeom.boundingSphere.containsPoint(dartPos)) {
             scene.remove(dart);
-            darts.splice(i,1);
+            darts.splice(i, 1);
             continue;
         }
 
         //loop through all balloons for each dart
         for (let j = balloons.length - 1; j >= 0; j--) {
-           
             //get balloon
-            let balloon = balloons[j];
+            let balloon = balloons[j].balloon;
             let balloonPos = new THREE.Vector3();
             balloon.getWorldPosition(balloonPos);
 
             //create bounding sphere to detect when the dart is on or inside it
-            let balloonVicinity = new THREE.Sphere(balloonPos, balloon.geometry.boundingSphere.radius);
+            let balloonVicinity = new THREE.Sphere(
+                balloonPos,
+                balloons[j].geometry.boundingSphere.radius
+            );
 
             //delete both dart and balloon if collision detected - can be changed to just delete balloon later?
             if (balloonVicinity.containsPoint(dartPos)) {
@@ -523,7 +382,7 @@ canvas.addEventListener(
 );
 
 //clear movement when window loses focus, or miss keyUp events
-window.addEventListener('blur', () => {
+window.addEventListener("blur", () => {
     moves.W = false;
     moves.A = false;
     moves.S = false;
@@ -533,7 +392,7 @@ window.addEventListener('blur', () => {
 //mouse clicks
 document.addEventListener("click", (e) => {
     if (!firing) {
-        let direction = new THREE.Vector3;
+        let direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
         shootDart(direction);
     }
@@ -552,78 +411,73 @@ document.addEventListener("mouseup", (e) => {
 
 /* Game Logic */
 
+// let sinceLastDart = 0;
+
 function shootDart(direction) {
-    let dart = createDart();
-    dart.rotation.copy(camera.rotation);
-    dart.translateZ(-4);
-};
+    darts.push(new Dart(scene, camera));
+}
 
 /* End Game Logic */
 
 /* Animation Functions */
-function animateBalloon(balloon, index) {
-    let time = clock.getElapsedTime();
-    balloon.position.y += Math.sin(time + index) * 0.01;
-};
-
-function animateDart(dart, delta) {
-
-    //pitch before yaw (though we don't yaw here, it's already yawed if not shot at <0,0,-1>)
-    let rotation = new THREE.Euler().setFromQuaternion(dart.quaternion, "YXZ");
-    rotation.x = THREE.MathUtils.clamp(
-        rotation.x + GRAVITY * DART_GRAVITY_SCALE * Math.PI * delta,
-        -Math.PI / 2,
-        Math.PI / 2
-    );
-    dart.quaternion.setFromEuler(rotation);
-
-    let direction = new THREE.Vector3;
-    dart.getWorldDirection(direction);
-    dart.applyMatrix4(translationMatrix(
-        (direction.x * DART_SPEED * delta), 
-        (direction.y * DART_SPEED * delta), 
-        (direction.z * DART_SPEED * delta))
-    );
-
-};
-
 /* End Animation Functions */
 
 /* Animate */
+
+let balloonTimer = 0;
+const balloonSpawnInterval = 2;
 function animate() {
     requestAnimationFrame(animate);
     time = clock.getElapsedTime();
     delta = time - last;
     last = time;
-  
+
     // TODO: trig f'n modulate sky color based on elapsed
+    balloonTimer += delta;
+    if (balloonTimer >= balloonSpawnInterval) {
+        createBalloonWithWaypoints(Balloon.COLORS.red, [
+            new THREE.Vector3(-5, 0, 1),
+            new THREE.Vector3(5, 0, 32),
+            new THREE.Vector3(19, 0, 27),
+        ]);
+        balloonTimer = 0;
+    }
 
     // TODO: Loop Balloons
-    balloons.forEach((balloon, index) => animateBalloon(balloon, index));
+    for (let i = balloons.length - 1; i >= 0; i--) {
+        if (balloons[i].animate(time, delta)) {
+            scene.remove(balloons[i].balloon);
+            balloons.splice(i, 1);
+        }
+    }
 
     // TODO: Loop Darts
-    darts.forEach((dart) => animateDart(dart, delta));
+    for (let i = darts.length - 1; i >= 0; i--) {
+        if (darts[i].animate(delta)) {
+            scene.remove(darts[i].dart);
+            darts.splice(i, 1);
+        }
+    }
 
     //disable controls
     // TODO: Animate Character
     // TODO: Move Camera
 
     updatePlayerMovement();
-    
+
     //engage automatic fire on long mouse hold
     if (firing) {
-        felta += delta
-        if (felta >= 4*(1/10)) automatic = true;
+        felta += delta;
+        if (felta >= 4 * (1 / 10)) automatic = true;
     }
 
     //automatic fire
-    if (automatic && felta >= 1/FIRE_RATE) {
-        let direction = new THREE.Vector3;
+    if (automatic && felta >= 1 / FIRE_RATE) {
+        let direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
         shootDart(direction);
         felta = 0;
     }
-
 
     checkCollisions(darts, balloons);
 
