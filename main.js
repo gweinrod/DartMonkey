@@ -36,10 +36,11 @@ let moves = {
     D: false,
 };
 
-let mouse = {
-    x:0,
-    y:0,
-    z:0
+const playerProperties = {
+    velocity: new THREE.Vector3(0, 0, 0),
+    ACCELERATION: 5,
+    MAX_XZ_SPEED: 30,
+    FRICTION: 0.85,
 };
 
 //physics elements for jumping
