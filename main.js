@@ -45,7 +45,7 @@ const playerProperties = {
 };
 
 //physics elements for jumping
-let isJumping = false;
+let isJumping = 0;
 let velocityY = 0;
 const GRAVITY = -30  ;  
 const JUMP_STRENGTH = 20;
@@ -342,9 +342,9 @@ function onKeyDown(event) {
             break;
         //TODO JUMP
         case 32: // 'SPACE' key
-            if (!isJumping) {
+            if (isJumping <= 1) {
                 playerProperties.velocity.y = JUMP_STRENGTH; // Apply jump force
-                isJumping = true;
+                isJumping ++;
             }
             break;
         //TODO UI Controls
@@ -450,7 +450,7 @@ const updatePlayerMovement = () => {
 
     let playerYVelocity = playerProperties.velocity.y;
 
-    if (isJumping) {
+    if (isJumping > 0) {
         playerYVelocity += GRAVITY * delta;
     }
 
