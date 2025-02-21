@@ -473,8 +473,11 @@ function checkCollisions(darts, balloons) {
         //get dart
         let dart = darts[i];
         let dartPos = new THREE.Vector3();
+        let dartDir = new THREE.Vector3();
         dart.getWorldPosition(dartPos);
-
+        dart.getWorldDirection(dartDir);
+        dartPos = dartPos.add(dartDir.multiplyScalar(DART_SIZE)); //tip of dart
+        
         //remove out of bounds darts
         if (!skyGeom.boundingSphere.containsPoint(dartPos)) {
             scene.remove(dart);
