@@ -127,6 +127,12 @@ let moves = {
     D: false,
 };
 
+let mouse = {
+    x:0,
+    y:0,
+    z:0
+};
+
 //physics elements for jumping
 let isJumping = false;
 let velocityY = 0;
@@ -400,6 +406,28 @@ window.addEventListener('blur', () => {
     moves.A = false;
     moves.S = false;
     moves.D = false;
+});
+
+//takes an x, y canvas click and returns x, y, z world position of that click
+function clickPositionToWorldPosition(e) 
+{
+    //xy on document canvas to xyz in screen space
+    let mouse = new THREE.Vector2();
+    mouse = (e.clientX / window.innerWidth * 2 - 1, ((window.innerHeight - e.clientY) / window.innerHeight) * 2 - 1);
+
+    //cast a ray, from the camera's perspective, to the camera from the point
+    const rayCaster = new THREE.Raycaster();
+    rayCaster.setFromCamera(mouse, camera);
+    
+    //get the origin of that ray
+    const direction = rayCaster.ray.direction;
+    const point = rayCaster.ray.origin.add(direction);
+
+    return point;
+}
+
+document.addEventListener("click", (e) => {
+    let clicked = clickPositionToWorldPosition(e)
 });
 
 /* End Controls */
