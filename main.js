@@ -13,7 +13,7 @@ const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 1.5;
 const BALLOON_RADIUS = 2;
-const DART_SPEED = 50;
+const DART_SPEED = 25;
 const MOVE_SPEED = 50;
 const MOVE_UNITS = .01 * MOVE_SPEED
 
@@ -22,7 +22,6 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(FOV, ASPECT, NEAR, FAR);
 
 //variables
-let players = [];
 let balloons = [];
 let darts = [];
 let clock = new THREE.Clock();
@@ -158,11 +157,10 @@ function createDart() {
     let dartMat = new THREE.MeshStandardMaterial({ color: 0xFF0000, roughness: 0.0, metalness: 0.5 });
     let dart = new THREE.Mesh(dartGeom, dartMat);
 
-    dart.applyMatrix4(scalingMatrix(0.5,0.5,0.5));
-    dart.position.set(0,-5,0);
-
+    dart.position.copy(camera.position);
     darts.push(dart);
     scene.add(dart);
+    console.log("dart created\n")
     return dart;
 }
 
@@ -357,7 +355,7 @@ document.querySelector('canvas').addEventListener('contextmenu', (e) => {
     e.preventDefault();
 }, false);
 
-//clear movement when window loses focus, or miss keyUp events, or miss spam keys
+//clear movement when window loses focus, or miss keyUp events
 window.addEventListener('blur', () => {
     moves.W = false;
     moves.A = false;
@@ -365,39 +363,10 @@ window.addEventListener('blur', () => {
     moves.D = false;
 });
 
-//takes an x, y canvas click and returns x, y, z world position of that click
-function clickPositionToWorldPosition(e) 
-{
-    //xy on document canvas to xyz in screen space
-    let mouse = new THREE.Vector2();
-    
-    //get ratio of user's click to total screen size (percent width position) and normalize from 0..1 to -1..1
-
-    /*
-    //let user click anywhere, aim at any object they click
-    mouse = (   e.clientX / window.innerWidth * 2 - 1, 
-                //additionally for y, count from bottom left up (screen) versus top left down (canvas)
-                ((window.innerHeight - e.clientY) / window.innerHeight) * 2 - 1);
-
-    //force center of screen click
-    mouse = (0, 0); 
-    */
-
-    //cast a ray, from the camera's perspective, to the camera, from the eyespace point
-    const rayCaster = new THREE.Raycaster();
-    rayCaster.setFromCamera(mouse, camera);
-    
-    //get the origin of that ray
-    const direction = rayCaster.ray.direction;
-    const point = rayCaster.ray.origin.add(direction);
-
-    return point;
-};
-
-
+//mouse clicks
 document.addEventListener("click", (e) => {
     let direction = new THREE.Vector3;
-    direction = camera.getWorldDirection;
+    camera.getWorldDirection(direction);
     shootDart(direction);
 });
 
@@ -407,7 +376,7 @@ document.addEventListener("click", (e) => {
 /* Game Logic */
 
 function shootDart(direction) {
-    let dart = (createDart());
+    let dart = createDart();
     dart.lookAt(direction);
 };
 
@@ -420,10 +389,14 @@ function animateBalloon(balloon, index) {
     balloon.position.y += Math.sin(time + index) * 0.01;
 };
 
-function animateDart(time, dart) {
-    dart.applyMatrix4(translationMatrix((DART_SPEED*time), DART_SPEED*time/4, (DART_SPEED*time)));
-    //TODO direction
-    //TODO gravity
+function animateDart(dart, delta) {
+    console.log("animating dart\n");
+    let direction = new THREE.Vector3;
+    dart.getWorldDirection(direction);
+    dart.applyMatrix4(translationMatrix((direction.x * DART_SPEED * delta), (direction.y * DART_SPEED * delta), (direction.z * DART_SPEED * delta)));
+    
+    //TODO gravity (let gravity act by rotating toward the ground)
+    //dart.applyMatrix4(rotationMatrixX)
 };
 
 /* End Animation Functions */
@@ -442,7 +415,7 @@ function animate() {
     balloons.forEach((balloon, index) => animateBalloon(balloon, index));
     
     // TODO: Loop Darts
-    darts.forEach((dart) => animateDart(dart));
+    darts.forEach((dart) => animateDart(dart, delta));
 
         //disable controls
     // TODO: Animate Character
