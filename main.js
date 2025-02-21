@@ -13,7 +13,7 @@ const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 1.5;
 const BALLOON_RADIUS = 2;
-const FIRE_RATE = 10; //10ms
+const FIRE_RATE = 5; //darts per second
 const DART_COLOR = 0x555555
 const DART_SIZE = 3;
 const DART_SPEED = -60; //along negative z
@@ -608,7 +608,7 @@ function animate() {
     //engage automatic fire on long mouse hold
     if (firing) {
         felta += delta
-        if (felta >= 4*(1/FIRE_RATE)) automatic = true;
+        if (felta >= 4*(1/10)) automatic = true;
     }
 
     //automatic fire
