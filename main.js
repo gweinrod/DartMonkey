@@ -184,34 +184,34 @@ function createDart() {
     return dart;
 }
 
+let balloonGeom = new THREE.SphereGeometry(BALLOON_RADIUS, 32, 32);
+let vertices = balloonGeom.attributes.position;
+
+for (let i = 0; i < vertices.count; i++) {
+    let x = vertices.getX(i);
+    let y = vertices.getY(i);
+    let z = vertices.getZ(i);
+
+    if (y <= 0) {
+        let factor = 1 + y * 0.05;
+        vertices.setX(i, x * factor);
+        vertices.setZ(i, z * factor);
+        vertices.setY(i, y * 0.95);
+    } else if (y > 0) {
+        vertices.setY(i, y * 0.8);
+    }
+}
+
+balloonGeom.attributes.position.needsUpdate = true;
+
 function createBalloon(color, position) 
 {
-    let balloonGeom = new THREE.SphereGeometry(BALLOON_RADIUS, 32, 32);
     let balloonMat = new THREE.MeshStandardMaterial({
         color: color,
         roughness: 0.3,
         metalness: 0.2,
     });
     let balloon = new THREE.Mesh(balloonGeom, balloonMat);
-
-    let vertices = balloonGeom.attributes.position;
-
-    for (let i = 0; i < vertices.count; i++) {
-        let x = vertices.getX(i);
-        let y = vertices.getY(i);
-        let z = vertices.getZ(i);
-
-        if (y <= 0) {
-            let factor = 1 + y * 0.05;
-            vertices.setX(i, x * factor);
-            vertices.setZ(i, z * factor);
-            vertices.setY(i, y * 0.95);
-        } else if (y > 0) {
-            vertices.setY(i, y * 0.8);
-        }
-    }
-
-    balloonGeom.attributes.position.needsUpdate = true;
 
     //use matrices for geometries, three.js calls for imports
     let transformations = new THREE.Matrix4();
