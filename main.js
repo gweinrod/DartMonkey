@@ -37,7 +37,7 @@ let clock = new THREE.Clock();
 let time = 0; //elapsed time
 let delta = 0; //time since last animate
 let last = 0; //time of last animate
-let felta = 0; //time since last dart fire
+let dartTimer = 0; //time since last dart fire
 let firing = false;
 let automatic = false;
 
@@ -353,14 +353,17 @@ function checkCollisions(darts, balloons) {
             //create bounding sphere to detect when the dart is on or inside it
             let balloonVicinity = new THREE.Sphere(
                 balloonPos,
-                balloons[j].geometry.boundingSphere.radius
+                balloon.geometry.boundingSphere.radius
             );
 
             //delete both dart and balloon if collision detected - can be changed to just delete balloon later?
             if (balloonVicinity.containsPoint(dartPos)) {
                 console.log("collision detected: dart %d hit Balloon %d", i, j);
-                scene.remove(balloon);
-                balloons.splice(j, 1);
+
+                if (balloons[j].pop()) {
+                    scene.remove(balloon);
+                    balloons.splice(j, 1);
+                }
                 scene.remove(dart);
                 darts.splice(i, 1);
                 //stop checking once we do the removal
@@ -391,20 +394,28 @@ window.addEventListener("blur", () => {
 
 //mouse clicks
 document.addEventListener("click", (e) => {
-    if (!firing) {
+    if (!firing && dartTimer >= 1 / FIRE_RATE) {
         let direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
         shootDart(direction);
+        dartTimer = 0;
     }
 });
 
+let felta = 0;
 //mouse hold
 document.addEventListener("mousedown", (e) => {
     firing = true;
+
+    if (automatic) {
+        console.log("automatic fire off");
+        automatic = false;
+    }
 });
 //mouse hold
 document.addEventListener("mouseup", (e) => {
     firing = false;
+    felta = 0;
 });
 
 /* End Controls */
@@ -434,12 +445,19 @@ function animate() {
 
     // TODO: trig f'n modulate sky color based on elapsed
     balloonTimer += delta;
+    dartTimer += delta;
     if (balloonTimer >= balloonSpawnInterval) {
-        createBalloonWithWaypoints(Balloon.COLORS.red, [
-            new THREE.Vector3(-5, 0, 1),
-            new THREE.Vector3(5, 0, 32),
-            new THREE.Vector3(19, 0, 27),
-        ]);
+        const waypoints = [
+            new THREE.Vector3(0, 0, -17),
+            new THREE.Vector3(2.5, 0, 14),
+            new THREE.Vector3(1.5, 0, 47),
+            new THREE.Vector3(-35, 0, 57),
+            new THREE.Vector3(-28, 0, 32),
+            new THREE.Vector3(-84, 0, 30),
+        ];
+        balloons.push(
+            new Balloon({ type: Balloon.TYPES.pink, waypoints }, scene)
+        );
         balloonTimer = 0;
     }
 
@@ -466,17 +484,20 @@ function animate() {
     updatePlayerMovement();
 
     //engage automatic fire on long mouse hold
-    if (firing) {
+    if (firing && !automatic) {
         felta += delta;
-        if (felta >= 4 * (1 / 10)) automatic = true;
+        if (felta >= 0.5) {
+            console.log("automatic fire");
+            automatic = true;
+        }
     }
 
     //automatic fire
-    if (automatic && felta >= 1 / FIRE_RATE) {
+    if (automatic && dartTimer >= 1 / FIRE_RATE) {
         let direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
         shootDart(direction);
-        felta = 0;
+        dartTimer = 0;
     }
 
     checkCollisions(darts, balloons);
