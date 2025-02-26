@@ -17,13 +17,13 @@ const TREE_A_MTL = "/models/LowPoly_TREE_A.mtl";
 const WORLDSIZE = 100;
 const SKYBLUE = 0x8bdafc;
 const PLAYER_HEIGHT = 3;
-const BALLOON_MIN_Y = 4;
+const BALLOON_MIN_Y = 6;
 const FLOOR_Y = 0;
 const FOV = 60;
 const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 2;
-const FIRE_RATE = 5; //darts per second
+const FIRE_RATE = 6; //darts per second
 const DART_SIZE = 3;
 
 //scene and camera
@@ -56,14 +56,14 @@ let moves = {
 const playerProperties = {
     velocity: new THREE.Vector3(0, 0, 0),
     ACCELERATION: 5,
-    MAX_XZ_SPEED: 30,
-    FRICTION: 0.85,
+    MAX_XZ_SPEED: 20,
+    FRICTION: 0.10,
 };
 
 //physics elements for jumping
 let isJumping = 0;
-const GRAVITY = -30;
-const JUMP_STRENGTH = 20;
+const GRAVITY = -36;
+const JUMP_STRENGTH = 36;
 
 /* End Initializations */
 
@@ -317,18 +317,6 @@ function createBalloonWithWaypoints(color, waypoints) {
     balloons.push(new Balloon({ color, waypoints }, scene));
 }
 
-//balloon matrix
-let balloon_demo_x = -20;
-for (const color in Balloon.COLORS) {
-    for (let i = 0; i <= 20; i += 10) {
-        createBalloon(
-            Balloon.COLORS[color],
-            new THREE.Vector3(balloon_demo_x, i+FLOOR_Y+BALLOON_MIN_Y, 0)
-        );
-    }
-    balloon_demo_x += 10;
-}
-
 /* End Geometries */
 
 /* Camera */
@@ -489,7 +477,7 @@ const updatePlayerMovement = () => {
         );
         playerXZVelocity.clampLength(0, playerProperties.MAX_XZ_SPEED);
     } else {
-        playerXZVelocity.multiplyScalar(playerProperties.FRICTION);
+        playerXZVelocity.multiplyScalar(1-playerProperties.FRICTION);
         if (playerXZVelocity.lengthSq() < 0.001) {
             playerXZVelocity.set(0, 0, 0);
         }
@@ -549,8 +537,8 @@ function checkCollisions(darts, balloons) {
                     scene.remove(balloon);
                     balloons.splice(j, 1);
                 }
-                scene.remove(dart);
-                darts.splice(i, 1);
+                //scene.remove(dart);
+                //darts.splice(i, 1);
                 //stop checking once we do the removal
                 //break;
             }
@@ -624,7 +612,8 @@ function shootDart(direction) {
 /* Animate */
 
 let balloonTimer = 0;
-const balloonSpawnInterval = 2;
+let balloonIndex = 0;
+const balloonSpawnInterval = 1;
 function animate() {
     requestAnimationFrame(animate);
     time = clock.getElapsedTime();
@@ -643,10 +632,21 @@ function animate() {
             new THREE.Vector3(-28, BALLOON_MIN_Y, 32),
             new THREE.Vector3(-84, BALLOON_MIN_Y, 30),
         ];
+
+        let balloonType = Balloon.TYPES.red;
+        if ((balloonIndex % 5) == 1) balloonType = Balloon.TYPES.blue;
+        else if ((balloonIndex % 5) == 2) balloonType = Balloon.TYPES.green;
+        else if ((balloonIndex % 5) == 3) balloonType = Balloon.TYPES.yellow;
+        else if ((balloonIndex % 5) == 4) balloonType = Balloon.TYPES.pink;
+
+
+
         balloons.push(
-            new Balloon({ type: Balloon.TYPES.pink, waypoints }, scene)
+            new Balloon({ type: balloonType, waypoints }, scene)
         );
         balloonTimer = 0;
+        balloonIndex++;
+        
     }
 
     // TODO: Loop Balloons

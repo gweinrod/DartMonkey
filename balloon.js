@@ -16,35 +16,34 @@ export default class Balloon {
     static TYPES = {
         red: {
             color: Balloon.COLORS.red,
-            speed: 3,
+            speed: 2,
             becomes: undefined,
-            size: 1,
+            size: 1.5,
         },
 
         blue: {
             color: Balloon.COLORS.blue,
-            speed: 3.5,
-            size: 1,
-            becomes: "red",
+            speed: 4,
+            size: 1.25,
+            becomes: undefined,
         },
         green: {
             color: Balloon.COLORS.green,
             speed: 6,
-            size: 0.9,
-            becomes: "blue",
+            size: 1,
+            becomes: undefined,
         },
         yellow: {
             color: Balloon.COLORS.yellow,
             speed: 8,
-            size: 1.1,
-            becomes: "green",
+            size: .75,
+            becomes: undefined,
         },
         pink: {
             color: Balloon.COLORS.pink,
-            speed: 11,
-
-            size: 0.75,
-            becomes: "yellow",
+            speed: 10,
+            size: 0.5,
+            becomes: undefined,
         },
     };
 
