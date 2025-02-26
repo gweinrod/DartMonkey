@@ -1,8 +1,0 @@
-Model Information:
-* title:	Procedural tree generator
-* source:	https://sketchfab.com/3d-models/procedural-tree-generator-268c7565b5334a5e9f011c58e1060998
-* author:	NETRUNNER_pl (https://sketchfab.com/NETRUNNER_pl)
-
-Model License:
-* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
-* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works

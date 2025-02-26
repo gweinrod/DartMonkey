@@ -1,34 +1,39 @@
 import * as THREE from "three";
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import Dart from "./dart";
 import Balloon from "./balloon";
-import { scalingMatrix, translationMatrix } from "./transformations";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 /* Initializations */
 
-//constants
-const WORLDSIZE = 1000;
-const SKYBLUE = 0x8bdafc;
+//model files
+const FLOOR_OBJ = "/models/DartMonkey_Floor_Forest.obj";
+const FLOOR_MTL = "/models/DartMonkey_Floor_Forest.mtl";
+const TREE_A_OBJ = "/models/LowPoly_TREE_A.obj";
+const TREE_A_MTL = "/models/LowPoly_TREE_A.mtl";
 
+//constants
+const WORLDSIZE = 100;
+const SKYBLUE = 0x8bdafc;
+const PLAYER_HEIGHT = 3;
+const BALLOON_MIN_Y = 4;
+const FLOOR_Y = 0;
 const FOV = 60;
 const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
-const FAR = WORLDSIZE * 1.5;
-const BALLOON_RADIUS = 2;
+const FAR = WORLDSIZE * 2;
 const FIRE_RATE = 5; //darts per second
-const DART_COLOR = 0x555555;
 const DART_SIZE = 3;
-const DART_SPEED = -60; //along negative z
-const DART_GRAVITY_SCALE = 1 / 250;
 
-const DART_STATES = {
-    flying: 0,
-    stuck: 1,
-};
-
-//objects
+//scene and camera
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(FOV, ASPECT, NEAR, FAR);
+
+//Object loader
+const matLoader = new MTLLoader();
+const objLoader = new OBJLoader();
+const glbLoader = new GLTFLoader();
 
 //variables
 let balloons = [];
@@ -57,7 +62,6 @@ const playerProperties = {
 
 //physics elements for jumping
 let isJumping = 0;
-let velocityY = 0;
 const GRAVITY = -30;
 const JUMP_STRENGTH = 20;
 
@@ -69,16 +73,229 @@ const JUMP_STRENGTH = 20;
 
 /* Geometries */
 
+//grass
+let grassMaterial = new THREE.MeshPhongMaterial({
+    color: 0x326732,
+    shininess: 1,
+    specular: new THREE.Color(0x165516)
+});
+
+//floor
+let floor = null; //check null before animating
+objLoader.load(FLOOR_OBJ, (level) => {
+    floor = level;
+    floor.children[0].material = grassMaterial;
+    scene.add(floor);
+});
+
+//environment
+
+//trees
+let trees = [];
+
+
+
+const TREES_MIN=5;
+const TREES_MAX=15;
+const FLOWERS_MIN=25;
+const FLOWERS_MAX=100;
+
+const TREES = TREES_MIN + Math.random()*(TREES_MAX - TREES_MIN);
+const FLOWERS = FLOWERS_MIN + Math.random()*(FLOWERS_MAX - FLOWERS_MIN);
+
+
+//todo refactor model clones
+function glb(n){
+
+}
+
+//large trees
+glbLoader.load(
+    "models/LowPoly_TREE_A.glb",
+    function (glb) {
+        const model = glb.scene;
+
+        // Create trees from the model after the model is loaded
+        for (let i = 0; i < TREES; i++) {
+            let tree = model.clone();
+
+            //scale
+            let s = 1 + 2*Math.random(); //1-3x
+            tree.scale.set(s, s, s); //proportional
+            tree.rotateY(Math.random()*Math.PI)
+
+            //position
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            tree.position.set(px, 0, pz);
+
+            scene.add(tree);
+        }
+    },
+    undefined,
+    function (error) {
+        console.error("Error loading model:", error);
+    }
+);
+
+//small trees
+glbLoader.load(
+    "models/LowPoly_TREE_B.glb",
+    function (glb) {
+        const model = glb.scene;
+
+        // Create trees from the model after the model is loaded
+        for (let i = 0; i < TREES*2; i++) {
+            let tree = model.clone();
+
+            //scale
+            let s = 1 + 2*Math.random(); //1-3x
+            tree.scale.set(s, s, s); //proportional
+            tree.rotateY(Math.random()*Math.PI)
+
+            //TODO wrap while (tree does not intersect skysphere)
+            //position
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            tree.position.set(px, 0, pz);
+
+            scene.add(tree);
+        }
+    },
+    undefined,
+    function (error) {
+        console.error("Error loading model:", error);
+    }
+);
+
+//dead trees
+glbLoader.load(
+    "models/LowPoly_TREE_C.glb",
+    function (glb) {
+        const model = glb.scene;
+
+        // Create trees from the model after the model is loaded
+        for (let i = 0; i < TREES/3; i++) {
+            let tree = model.clone();
+
+            //scale
+            let s = 1 + 2*Math.random(); //1-3x
+            tree.scale.set(s, s, s); //proportional
+            tree.rotateY(Math.random()*Math.PI)
+
+            //TODO wrap while (tree does not intersect skysphere)
+            //position
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            tree.position.set(px, 0, pz);
+
+            scene.add(tree);
+        }
+    },
+    undefined,
+    function (error) {
+        console.error("Error loading model:", error);
+    }
+);
+
+//logs
+glbLoader.load(
+    "models/LowPoly_TREE_D.glb",
+    function (glb) {
+        const model = glb.scene;
+
+        // Create trees from the model after the model is loaded
+        for (let i = 0; i < TREES/2; i++) {
+            let tree = model.clone();
+
+            //scale
+            let s = 1 + Math.random(); //1-2x
+            tree.scale.set(s, s, s); //proportional
+            tree.rotateY(Math.random()*Math.PI)
+
+            //TODO wrap while (tree does not intersect skysphere)
+            //position
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            tree.position.set(px, 0, pz);
+
+            scene.add(tree);
+        }
+    },
+    undefined,
+    function (error) {
+        console.error("Error loading model:", error);
+    }
+);
+
+//white flowers
+glbLoader.load(
+    "models/LowPoly_TREE_E.glb",
+    function (glb) {
+        const model = glb.scene;
+
+        // Create trees from the model after the model is loaded
+        for (let i = 0; i < FLOWERS; i++) {
+            let tree = model.clone();
+
+            //scalew
+            let s = 1 + Math.random(); //1-2x
+            tree.scale.set(s, s, s); //proportional
+            tree.rotateY(Math.random()*Math.PI)
+
+            //TODO wrap while (tree does not intersect skysphere)
+            //position
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            tree.position.set(px, 0, pz);
+
+            scene.add(tree);
+        }
+    },
+    undefined,
+    function (error) {
+        console.error("Error loading model:", error);
+    }
+);
+
+//blue flowers
+glbLoader.load(
+    "models/LowPoly_TREE_F.glb",
+    function (glb) {
+        const model = glb.scene;
+
+        // Create trees from the model after the model is loaded
+        for (let i = 0; i < FLOWERS; i++) {
+            let tree = model.clone();
+
+            //scale
+            let s = 1 + Math.random(); //1-2x
+            tree.scale.set(s, s, s); //proportional
+            tree.rotateY(Math.random()*Math.PI)
+
+            //TODO wrap while (tree does not intersect skysphere)
+            //position
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            tree.position.set(px, 0, pz);
+
+            scene.add(tree);
+        }
+    },
+    undefined,
+    function (error) {
+        console.error("Error loading model:", error);
+    }
+);
+
 //sky
-let skyGeom = new THREE.SphereGeometry(WORLDSIZE, 32, 32);
-let skyMat = new THREE.MeshStandardMaterial({
+let skyGeometry = new THREE.SphereGeometry(WORLDSIZE, 32, 32);
+let skyMaterial = new THREE.MeshStandardMaterial({
     color: SKYBLUE,
     side: THREE.BackSide,
 });
-let sky = new THREE.Mesh(skyGeom, skyMat);
+let sky = new THREE.Mesh(skyGeometry, skyMaterial);
 scene.add(sky);
-
-//player
 
 //cursor
 const cursorTexture = new THREE.TextureLoader().load("./images/cursor.png");
@@ -100,55 +317,23 @@ function createBalloonWithWaypoints(color, waypoints) {
     balloons.push(new Balloon({ color, waypoints }, scene));
 }
 
-//demo balloons
+//balloon matrix
 let balloon_demo_x = -20;
 for (const color in Balloon.COLORS) {
     for (let i = 0; i <= 20; i += 10) {
         createBalloon(
             Balloon.COLORS[color],
-            new THREE.Vector3(balloon_demo_x, i, 0)
+            new THREE.Vector3(balloon_demo_x, i+FLOOR_Y+BALLOON_MIN_Y, 0)
         );
     }
     balloon_demo_x += 10;
 }
 
-//details
-
-//large trees and ground
-const loader = new GLTFLoader();
-loader.load(
-    "models/procedural_tree_generator/scene.gltf",
-    function (gltf) {
-        const tree = gltf.scene;
-
-        // Adjust position, scale, and rotation
-        tree.position.set(0, -10, 0);
-        tree.scale.set(5, 5, 5);
-
-        scene.add(tree);
-
-        // Clone trees after the model is loaded
-        for (let i = 0; i < 1; i++) {
-            //let treeClone = tree.clone();
-            tree.position.set(10, -7, Math.random() * 10 - 5);
-            scene.add(tree);
-        }
-    },
-    undefined,
-    function (error) {
-        console.error("Error loading model:", error);
-    }
-);
-
-//small tree
-
-//rock
-
 /* End Geometries */
 
 /* Camera */
 
-camera.position.set(0, 0, 30);
+camera.position.set(0, PLAYER_HEIGHT, 30);
 camera.lookAt(0, 0, 0);
 
 /* End Camera */
@@ -337,7 +522,7 @@ function checkCollisions(darts, balloons) {
         dartPos = dartPos.add(dartDir.multiplyScalar(DART_SIZE / 2)); //tip of dart
 
         //remove out of bounds darts
-        if (!skyGeom.boundingSphere.containsPoint(dartPos)) {
+        if (!skyGeometry.boundingSphere.containsPoint(dartPos)) {
             scene.remove(dart);
             darts.splice(i, 1);
             continue;
@@ -394,11 +579,14 @@ window.addEventListener("blur", () => {
 
 //mouse clicks
 document.addEventListener("click", (e) => {
-    if (!firing && dartTimer >= 1 / FIRE_RATE) {
+    if (!automatic && dartTimer >= 1 / FIRE_RATE) {
         let direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
         shootDart(direction);
         dartTimer = 0;
+    } else {
+        automatic = false;
+        felta = 0;
     }
 });
 
@@ -448,12 +636,12 @@ function animate() {
     dartTimer += delta;
     if (balloonTimer >= balloonSpawnInterval) {
         const waypoints = [
-            new THREE.Vector3(0, 0, -17),
-            new THREE.Vector3(2.5, 0, 14),
-            new THREE.Vector3(1.5, 0, 47),
-            new THREE.Vector3(-35, 0, 57),
-            new THREE.Vector3(-28, 0, 32),
-            new THREE.Vector3(-84, 0, 30),
+            new THREE.Vector3(0, BALLOON_MIN_Y, -17),
+            new THREE.Vector3(2.5, BALLOON_MIN_Y, 14),
+            new THREE.Vector3(1.5, BALLOON_MIN_Y, 47),
+            new THREE.Vector3(-35, BALLOON_MIN_Y, 57),
+            new THREE.Vector3(-28, BALLOON_MIN_Y, 32),
+            new THREE.Vector3(-84, BALLOON_MIN_Y, 30),
         ];
         balloons.push(
             new Balloon({ type: Balloon.TYPES.pink, waypoints }, scene)
@@ -506,8 +694,8 @@ function animate() {
     cameraVelocity.multiplyScalar(delta);
     camera.position.add(cameraVelocity);
 
-    if (camera.position.y <= 0) {
-        camera.position.y = 0;
+    if (camera.position.y <= PLAYER_HEIGHT) {
+        camera.position.y = PLAYER_HEIGHT;
         playerProperties.velocity.y = 0;
         isJumping = false;
     }
