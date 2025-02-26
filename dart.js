@@ -309,7 +309,7 @@ class DartGeometry extends THREE.BufferGeometry {
     }
 }
 
-const FLOOR_Y = -6;
+const FLOOR_Y = 0;
 export default class Dart {
     static GRAVITY = -30;
     static GRAVITY_SCALE = 1 / 250;
