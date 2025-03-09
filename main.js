@@ -461,6 +461,53 @@ const getYawFromQuaternion = (q) => {
     return euler.y;
 };
 
+// const updatePlayerMovement = () => {
+//     const inputDirection = new THREE.Vector3();
+
+//     const forward = new THREE.Vector3(0, 0, -1);
+//     const right = new THREE.Vector3(1, 0, 0);
+//     const cameraYaw = getYawFromQuaternion(camera.quaternion);
+//     forward.applyEuler(new THREE.Euler(0, cameraYaw, 0));
+//     right.applyEuler(new THREE.Euler(0, cameraYaw, 0));
+
+//     if (moves.W) inputDirection.add(forward);
+//     if (moves.A) inputDirection.addScaledVector(right, -1);
+//     if (moves.S) inputDirection.addScaledVector(forward, -1);
+//     if (moves.D) inputDirection.add(right);
+
+//     const playerXZVelocity = new THREE.Vector3(
+//         playerProperties.velocity.x,
+//         0,
+//         playerProperties.velocity.z
+//     );
+
+//     if (inputDirection.lengthSq() > 0) {
+//         inputDirection.normalize();
+//         playerXZVelocity.addScaledVector(
+//             inputDirection,
+//             playerProperties.ACCELERATION
+//         );
+//         playerXZVelocity.clampLength(0, playerProperties.MAX_XZ_SPEED);
+//     } else {
+//         playerXZVelocity.multiplyScalar(playerProperties.FRICTION);
+//         if (playerXZVelocity.lengthSq() < 0.001) {
+//             playerXZVelocity.set(0, 0, 0);
+//         }
+//     }
+
+//     let playerYVelocity = playerProperties.velocity.y;
+
+//     if (isJumping > 0) {
+//         playerYVelocity += GRAVITY * delta;
+//     }
+
+//     playerProperties.velocity.set(
+//         playerXZVelocity.x,
+//         playerYVelocity,
+//         playerXZVelocity.z
+//     );
+// };
+
 const updatePlayerMovement = () => {
     const inputDirection = new THREE.Vector3();
 
@@ -501,12 +548,29 @@ const updatePlayerMovement = () => {
         playerYVelocity += GRAVITY * delta;
     }
 
+    // Update velocity
     playerProperties.velocity.set(
         playerXZVelocity.x,
         playerYVelocity,
         playerXZVelocity.z
     );
+
+    // Prevent the player from leaving the world
+    const worldBounds = {
+        minX: -WORLDSIZE+5,
+        maxX: WORLDSIZE-5,
+        minZ: -WORLDSIZE+5,
+        maxZ: WORLDSIZE-5,
+        minY: 0,  // Ground level
+        maxY: WORLDSIZE-5 // Ceiling limit (if applicable)
+    };
+
+    // Clamp player position
+    camera.position.x = Math.max(worldBounds.minX, Math.min(worldBounds.maxX, camera.position.x));
+    camera.position.y = Math.max(worldBounds.minY, Math.min(worldBounds.maxY, camera.position.y));
+    camera.position.z = Math.max(worldBounds.minZ, Math.min(worldBounds.maxZ, camera.position.z));
 };
+
 
 //collision detection
 function checkCollisions(darts, balloons) {
@@ -614,6 +678,7 @@ document.addEventListener("mouseup", (e) => {
 
 function shootDart(direction) {
     darts.push(new Dart(scene, camera));
+    console.log("edge: " + camera.position.x);
 }
 
 /* End Game Logic */
