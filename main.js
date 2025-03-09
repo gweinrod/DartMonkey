@@ -68,9 +68,10 @@ const JUMP_STRENGTH = 20;
 //bounding boxes for collision between player and world
 const objectBoundingBoxes = [];
 const playerBoundingBox = new THREE.Box3();
-const playerSize = new THREE.Vector3(2, PLAYER_HEIGHT*0.5, 2);
-const boxHelper = new THREE.Box3Helper(playerBoundingBox, 0x00ff00); // Green outline
-scene.add(boxHelper);
+let boundingSpheres = [];
+const playerSize = new THREE.Vector3(1.5, PLAYER_HEIGHT*0.5, 1.5);
+// const boxHelper = new THREE.Box3Helper(playerBoundingBox, 0x00ff00); // Green outline
+// scene.add(boxHelper);
 
 /* End Initializations */
 
@@ -139,12 +140,12 @@ glbLoader.load(
             scene.add(tree);
 
             let box = new THREE.Box3().setFromObject(tree);
-            box.expandByScalar(-15);
+            box.expandByScalar(-25);
             box.min.y = 0;
             objectBoundingBoxes.push(box); 
 
-            const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
-            scene.add(boxHelper);
+            // const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -181,8 +182,8 @@ glbLoader.load(
             box.min.y = 0;
             objectBoundingBoxes.push(box);
 
-            const boxHelper = new THREE.Box3Helper(box, 0x0000ff); // blue outline
-            scene.add(boxHelper);
+            // const boxHelper = new THREE.Box3Helper(box, 0x0000ff); // blue outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -218,8 +219,8 @@ glbLoader.load(
             box.expandByScalar(0.5);
             objectBoundingBoxes.push(box);
 
-            const boxHelper = new THREE.Box3Helper(box, 0xffffff); // white outline
-            scene.add(boxHelper);
+            // const boxHelper = new THREE.Box3Helper(box, 0xffffff); // white outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -252,11 +253,11 @@ glbLoader.load(
             scene.add(tree);
 
             let box = new THREE.Box3().setFromObject(tree);
-            box.expandByScalar(2);
+            box.expandByScalar(0);
             objectBoundingBoxes.push(box);
 
-            const boxHelper = new THREE.Box3Helper(box, 0x00ff00); // Green outline
-            scene.add(boxHelper);
+            // const boxHelper = new THREE.Box3Helper(box, 0x00ff00); // Green outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -498,7 +499,7 @@ const getYawFromQuaternion = (q) => {
     return euler.y;
 };
 
-const updatePlayerMovement = () => {
+const updatePlayerMovement = (balloons) => {
     const inputDirection = new THREE.Vector3();
 
     const forward = new THREE.Vector3(0, 0, -1);
@@ -563,30 +564,83 @@ const updatePlayerMovement = () => {
     playerBoundingBox.setFromCenterAndSize(camera.position, playerSize);
     playerBoundingBox.expandByScalar(-0.5); 
 
-    let collisionDetected = false;
+    let treeLogCollisionDetected = false;
+    let balloonCollisionDetected = true;
+    let collidedBalloon = null;
 
     for (const objectBox of objectBoundingBoxes) {
         if (playerBoundingBox.intersectsBox(objectBox)) {
-            collisionDetected = true;
+            console.log("tree/log collision");
+            treeLogCollisionDetected = true;
             break;
         }
     }
 
-    if (collisionDetected) {
-        console.log("collision");
+    boundingSpheres.forEach(sphere => {
+        scene.remove(sphere);
+    });
+    boundingSpheres = [];
+
+    let collidedBalloonPos = new THREE.Vector3();
+
+    //remove previous bounding spheres
+    boundingSpheres.forEach(sphere => scene.remove(sphere));
+    boundingSpheres = [];
+
+    //handle balloon collisions
+    for (let j = balloons.length - 1; j >= 0; j--) {
+        let balloon = balloons[j].balloon;
+        let balloonPos = new THREE.Vector3();
+        balloon.getWorldPosition(balloonPos);
+
+        let balloonBox = new THREE.Box3().setFromCenterAndSize(
+            balloonPos, 
+            new THREE.Vector3(
+                balloon.geometry.boundingSphere.radius * 2,
+                balloon.geometry.boundingSphere.radius * 2,
+                balloon.geometry.boundingSphere.radius * 2
+            )
+        );
+
+        if (playerBoundingBox.intersectsBox(balloonBox)) {
+            console.log("Balloon collision");
+
+            let bounceDirection = new THREE.Vector3(
+                playerProperties.velocity.x, 
+                Math.abs(playerProperties.velocity.y)+0.5, //slight upward motion
+                playerProperties.velocity.z
+            );
+
+            if (bounceDirection.lengthSq() > 0) {
+                bounceDirection.normalize();
+                balloon.position.addScaledVector(bounceDirection, 0.5); 
+            }
+
+            break;
+        }
+
+        // //debug bounding spheres
+        // let sphereGeometry = new THREE.SphereGeometry(balloon.geometry.boundingSphere.radius * 2, 16, 16);
+        // let sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+        // let boundingSphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+
+        // boundingSphereMesh.position.copy(balloonPos);
+        // scene.add(boundingSphereMesh);
+        // boundingSpheres.push(boundingSphereMesh);
+    }
+
+
+    if (treeLogCollisionDetected) {
         let movementDirection = new THREE.Vector3(playerProperties.velocity.x, 0, playerProperties.velocity.z);
     
         if (movementDirection.lengthSq() > 0) {
             movementDirection.normalize();
-            console.log("movement direction" + movementDirection.x + " " + movementDirection.z);
             camera.position.addScaledVector(movementDirection, -0.2);
         }
     
-        playerProperties.velocity.set(0, 0, 0);
         playerProperties.velocity.set(-200*movementDirection.x, 0, -200*movementDirection.z);
-
     }
-
+    
 };
 
 
@@ -754,7 +808,7 @@ function animate() {
     // TODO: Animate Character
     // TODO: Move Camera
 
-    updatePlayerMovement();
+    updatePlayerMovement(balloons);
 
     //engage automatic fire on long mouse hold
     if (firing && !automatic) {
@@ -798,7 +852,7 @@ function animate() {
 
     renderer.render(scene, camera);
 
-    boxHelper.updateMatrixWorld(true);
+    //boxHelper.updateMatrixWorld(true);
 }
 animate();
 
