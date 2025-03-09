@@ -65,6 +65,13 @@ let isJumping = 0;
 const GRAVITY = -30;
 const JUMP_STRENGTH = 20;
 
+//bounding boxes for collision between player and world
+const objectBoundingBoxes = [];
+const playerBoundingBox = new THREE.Box3();
+const playerSize = new THREE.Vector3(2, PLAYER_HEIGHT*0.5, 2);
+const boxHelper = new THREE.Box3Helper(playerBoundingBox, 0x00ff00); // Green outline
+scene.add(boxHelper);
+
 /* End Initializations */
 
 /* Transformations */
@@ -130,6 +137,14 @@ glbLoader.load(
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
+
+            let box = new THREE.Box3().setFromObject(tree);
+            box.expandByScalar(-15);
+            box.min.y = 0;
+            objectBoundingBoxes.push(box); 
+
+            const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
+            scene.add(boxHelper);
         }
     },
     undefined,
@@ -160,6 +175,14 @@ glbLoader.load(
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
+
+            let box = new THREE.Box3().setFromObject(tree);
+            box.expandByScalar(-1);
+            box.min.y = 0;
+            objectBoundingBoxes.push(box);
+
+            const boxHelper = new THREE.Box3Helper(box, 0x0000ff); // blue outline
+            scene.add(boxHelper);
         }
     },
     undefined,
@@ -190,6 +213,13 @@ glbLoader.load(
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
+
+            let box = new THREE.Box3().setFromObject(tree);
+            box.expandByScalar(0.5);
+            objectBoundingBoxes.push(box);
+
+            const boxHelper = new THREE.Box3Helper(box, 0xffffff); // white outline
+            scene.add(boxHelper);
         }
     },
     undefined,
@@ -220,6 +250,13 @@ glbLoader.load(
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
+
+            let box = new THREE.Box3().setFromObject(tree);
+            box.expandByScalar(2);
+            objectBoundingBoxes.push(box);
+
+            const boxHelper = new THREE.Box3Helper(box, 0x00ff00); // Green outline
+            scene.add(boxHelper);
         }
     },
     undefined,
@@ -461,53 +498,6 @@ const getYawFromQuaternion = (q) => {
     return euler.y;
 };
 
-// const updatePlayerMovement = () => {
-//     const inputDirection = new THREE.Vector3();
-
-//     const forward = new THREE.Vector3(0, 0, -1);
-//     const right = new THREE.Vector3(1, 0, 0);
-//     const cameraYaw = getYawFromQuaternion(camera.quaternion);
-//     forward.applyEuler(new THREE.Euler(0, cameraYaw, 0));
-//     right.applyEuler(new THREE.Euler(0, cameraYaw, 0));
-
-//     if (moves.W) inputDirection.add(forward);
-//     if (moves.A) inputDirection.addScaledVector(right, -1);
-//     if (moves.S) inputDirection.addScaledVector(forward, -1);
-//     if (moves.D) inputDirection.add(right);
-
-//     const playerXZVelocity = new THREE.Vector3(
-//         playerProperties.velocity.x,
-//         0,
-//         playerProperties.velocity.z
-//     );
-
-//     if (inputDirection.lengthSq() > 0) {
-//         inputDirection.normalize();
-//         playerXZVelocity.addScaledVector(
-//             inputDirection,
-//             playerProperties.ACCELERATION
-//         );
-//         playerXZVelocity.clampLength(0, playerProperties.MAX_XZ_SPEED);
-//     } else {
-//         playerXZVelocity.multiplyScalar(playerProperties.FRICTION);
-//         if (playerXZVelocity.lengthSq() < 0.001) {
-//             playerXZVelocity.set(0, 0, 0);
-//         }
-//     }
-
-//     let playerYVelocity = playerProperties.velocity.y;
-
-//     if (isJumping > 0) {
-//         playerYVelocity += GRAVITY * delta;
-//     }
-
-//     playerProperties.velocity.set(
-//         playerXZVelocity.x,
-//         playerYVelocity,
-//         playerXZVelocity.z
-//     );
-// };
-
 const updatePlayerMovement = () => {
     const inputDirection = new THREE.Vector3();
 
@@ -569,6 +559,34 @@ const updatePlayerMovement = () => {
     camera.position.x = Math.max(worldBounds.minX, Math.min(worldBounds.maxX, camera.position.x));
     camera.position.y = Math.max(worldBounds.minY, Math.min(worldBounds.maxY, camera.position.y));
     camera.position.z = Math.max(worldBounds.minZ, Math.min(worldBounds.maxZ, camera.position.z));
+
+    playerBoundingBox.setFromCenterAndSize(camera.position, playerSize);
+    playerBoundingBox.expandByScalar(-0.5); 
+
+    let collisionDetected = false;
+
+    for (const objectBox of objectBoundingBoxes) {
+        if (playerBoundingBox.intersectsBox(objectBox)) {
+            collisionDetected = true;
+            break;
+        }
+    }
+
+    if (collisionDetected) {
+        console.log("collision");
+        let movementDirection = new THREE.Vector3(playerProperties.velocity.x, 0, playerProperties.velocity.z);
+    
+        if (movementDirection.lengthSq() > 0) {
+            movementDirection.normalize();
+            console.log("movement direction" + movementDirection.x + " " + movementDirection.z);
+            camera.position.addScaledVector(movementDirection, -0.2);
+        }
+    
+        playerProperties.velocity.set(0, 0, 0);
+        playerProperties.velocity.set(-200*movementDirection.x, 0, -200*movementDirection.z);
+
+    }
+
 };
 
 
@@ -678,7 +696,6 @@ document.addEventListener("mouseup", (e) => {
 
 function shootDart(direction) {
     darts.push(new Dart(scene, camera));
-    console.log("edge: " + camera.position.x);
 }
 
 /* End Game Logic */
@@ -708,9 +725,12 @@ function animate() {
             new THREE.Vector3(-28, BALLOON_MIN_Y, 32),
             new THREE.Vector3(-84, BALLOON_MIN_Y, 30),
         ];
-        balloons.push(
-            new Balloon({ type: Balloon.TYPES.pink, waypoints }, scene)
-        );
+        let balloon = new Balloon({ type: Balloon.TYPES.pink, waypoints }, scene);
+        balloons.push(balloon);
+
+        // let box = new THREE.Box3().setFromObject(balloon);
+        // objectBoundingBoxes.push(box);
+        
         balloonTimer = 0;
     }
 
@@ -777,6 +797,8 @@ function animate() {
     // TODO: Apply Shaders
 
     renderer.render(scene, camera);
+
+    boxHelper.updateMatrixWorld(true);
 }
 animate();
 
