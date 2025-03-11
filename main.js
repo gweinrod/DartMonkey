@@ -70,8 +70,8 @@ const objectBoundingBoxes = [];
 const playerBoundingBox = new THREE.Box3();
 let boundingSpheres = [];
 const playerSize = new THREE.Vector3(1.5, PLAYER_HEIGHT*0.5, 1.5);
-const boxHelper = new THREE.Box3Helper(playerBoundingBox, 0x00ff00); // Green outline
-scene.add(boxHelper);
+//const boxHelper = new THREE.Box3Helper(playerBoundingBox, 0x00ff00); // Green outline
+//scene.add(boxHelper);
 
 /* End Initializations */
 
@@ -151,8 +151,8 @@ glbLoader.load(
             box.max.z = tree.position.z+2;
             objectBoundingBoxes.push(box); 
 
-            const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
-            scene.add(boxHelper);
+            // const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -193,8 +193,8 @@ glbLoader.load(
             box.max.z = tree.position.z+1;
             objectBoundingBoxes.push(box);
 
-            const boxHelper = new THREE.Box3Helper(box, 0x0000ff); // blue outline
-            scene.add(boxHelper);
+            // const boxHelper = new THREE.Box3Helper(box, 0x0000ff); // blue outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -230,8 +230,8 @@ glbLoader.load(
             box.expandByScalar(-1);
             objectBoundingBoxes.push(box);
 
-            const boxHelper = new THREE.Box3Helper(box, 0xffffff); // white outline
-            scene.add(boxHelper);
+            // const boxHelper = new THREE.Box3Helper(box, 0xffffff); // white outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -267,8 +267,8 @@ glbLoader.load(
             box.expandByScalar(-1);
             objectBoundingBoxes.push(box);
 
-            const boxHelper = new THREE.Box3Helper(box, 0x00ff00); // Green outline
-            scene.add(boxHelper);
+            // const boxHelper = new THREE.Box3Helper(box, 0x00ff00); // Green outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -614,7 +614,7 @@ const updatePlayerMovement = (balloons) => {
         );
 
         if (playerBoundingBox.intersectsBox(balloonBox)) {
-            console.log("Balloon collision");
+            console.log("Balloon-player collision");
 
             let bounceDirection = new THREE.Vector3(
                 playerProperties.velocity.x, 
@@ -631,13 +631,13 @@ const updatePlayerMovement = (balloons) => {
         }
 
         // //debug bounding spheres
-        let sphereGeometry = new THREE.SphereGeometry(balloon.geometry.boundingSphere.radius * 2, 16, 16);
-        let sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
-        let boundingSphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        // let sphereGeometry = new THREE.SphereGeometry(balloon.geometry.boundingSphere.radius * 2, 16, 16);
+        // let sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+        // let boundingSphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
 
-        boundingSphereMesh.position.copy(balloonPos);
-        scene.add(boundingSphereMesh);
-        boundingSpheres.push(boundingSphereMesh);
+        // boundingSphereMesh.position.copy(balloonPos);
+        // scene.add(boundingSphereMesh);
+        // boundingSpheres.push(boundingSphereMesh);
     }
 
 
