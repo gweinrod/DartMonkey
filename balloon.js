@@ -98,7 +98,7 @@ export default class Balloon {
         const balloonMat = new THREE.MeshStandardMaterial({
             color: this.color,
             roughness: 0.3,
-            metalness: 0.2,
+            metalness: 0.2
         });
 
         this.balloon = new THREE.Mesh(

@@ -264,6 +264,7 @@ glbLoader.load(
             scene.add(tree);
 
             let box = new THREE.Box3().setFromObject(tree);
+            box.min.y = 0;
             box.expandByScalar(-1);
             objectBoundingBoxes.push(box);
 
@@ -558,19 +559,24 @@ const updatePlayerMovement = (balloons) => {
     );
 
     // Prevent the player from leaving the world
-    const worldBounds = {
-        minX: -WORLDSIZE+5,
-        maxX: WORLDSIZE-5,
-        minZ: -WORLDSIZE+5,
-        maxZ: WORLDSIZE-5,
-        minY: 0,  // Ground level
-        maxY: WORLDSIZE-5 // Ceiling limit (if applicable)
-    };
+    const sphereCenter = new THREE.Vector3(0, 0, 0); // Center of the sphere (assuming the ground is y = 0)
+    const sphereRadius = WORLDSIZE - 5; // Define world boundary with a small buffer
 
-    // Clamp player position
-    camera.position.x = Math.max(worldBounds.minX, Math.min(worldBounds.maxX, camera.position.x));
-    camera.position.y = Math.max(worldBounds.minY, Math.min(worldBounds.maxY, camera.position.y));
-    camera.position.z = Math.max(worldBounds.minZ, Math.min(worldBounds.maxZ, camera.position.z));
+    // Keep player on ground level
+    camera.position.y = Math.max(0, Math.min(WORLDSIZE - 5, camera.position.y)); // Clamp Y
+
+    // Compute 2D position on the X-Z plane
+    const playerXZ = new THREE.Vector2(camera.position.x, camera.position.z);
+    const distanceFromCenter = playerXZ.length();
+
+    if (distanceFromCenter > sphereRadius) {
+        // Clamp movement within the circular boundary
+        playerXZ.normalize().multiplyScalar(sphereRadius);
+        camera.position.x = playerXZ.x;
+        camera.position.z = playerXZ.y;
+    }
+
+
 
     playerBoundingBox.setFromCenterAndSize(camera.position, playerSize);
     playerBoundingBox.expandByScalar(-0.5); 
