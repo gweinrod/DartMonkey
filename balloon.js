@@ -19,6 +19,7 @@ export default class Balloon {
             speed: 3,
             becomes: undefined,
             size: 1,
+            score: 50
         },
 
         blue: {
@@ -26,18 +27,22 @@ export default class Balloon {
             speed: 3.5,
             size: 1,
             becomes: "red",
+            score: 40
         },
         green: {
             color: Balloon.COLORS.green,
             speed: 6,
             size: 0.9,
             becomes: "blue",
+            score: 30
+
         },
         yellow: {
             color: Balloon.COLORS.yellow,
             speed: 8,
             size: 1.1,
             becomes: "green",
+            score: 20
         },
         pink: {
             color: Balloon.COLORS.pink,
@@ -45,6 +50,7 @@ export default class Balloon {
 
             size: 0.75,
             becomes: "yellow",
+            score: 10
         },
     };
 

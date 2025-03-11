@@ -73,6 +73,9 @@ const playerSize = new THREE.Vector3(1.5, PLAYER_HEIGHT*0.5, 1.5);
 //const boxHelper = new THREE.Box3Helper(playerBoundingBox, 0x00ff00); // Green outline
 //scene.add(boxHelper);
 
+//score
+let score = 0;
+
 /* End Initializations */
 
 /* Transformations */
@@ -633,6 +636,8 @@ const updatePlayerMovement = (balloons) => {
                 balloon.position.addScaledVector(bounceDirection, 0.5); 
             }
 
+            updateScore(-5);
+
             break;
         }
 
@@ -706,6 +711,7 @@ function checkCollisions(darts, balloons) {
                 darts.splice(i, 1);
                 //stop checking once we do the removal
                 //break;
+                updateScore(10);
             }
 
             //TODO collide with tree and stick, remove dart from array (not scene)
@@ -767,6 +773,11 @@ document.addEventListener("mouseup", (e) => {
 
 function shootDart(direction) {
     darts.push(new Dart(scene, camera));
+}
+
+function updateScore(score_amt) {
+    score += score_amt;
+    document.getElementById("scoreDisplay").innerText = `Score: ${score}`;
 }
 
 /* End Game Logic */
