@@ -70,8 +70,8 @@ const objectBoundingBoxes = [];
 const playerBoundingBox = new THREE.Box3();
 let boundingSpheres = [];
 const playerSize = new THREE.Vector3(1.5, PLAYER_HEIGHT*0.5, 1.5);
-// const boxHelper = new THREE.Box3Helper(playerBoundingBox, 0x00ff00); // Green outline
-// scene.add(boxHelper);
+const boxHelper = new THREE.Box3Helper(playerBoundingBox, 0x00ff00); // Green outline
+scene.add(boxHelper);
 
 /* End Initializations */
 
@@ -139,13 +139,20 @@ glbLoader.load(
 
             scene.add(tree);
 
+            //need to manually set x and z max and min
+
             let box = new THREE.Box3().setFromObject(tree);
-            box.expandByScalar(-25);
+            box.expandByScalar(-15);
             box.min.y = 0;
+            box.max.y = 25;
+            box.min.x = tree.position.x-2;
+            box.max.x = tree.position.x+2;
+            box.min.z = tree.position.z-2;
+            box.max.z = tree.position.z+2;
             objectBoundingBoxes.push(box); 
 
-            // const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
-            // scene.add(boxHelper);
+            const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
+            scene.add(boxHelper);
         }
     },
     undefined,
@@ -178,12 +185,16 @@ glbLoader.load(
             scene.add(tree);
 
             let box = new THREE.Box3().setFromObject(tree);
-            box.expandByScalar(-1);
+            box.expandByScalar(-2);
             box.min.y = 0;
+            box.min.x = tree.position.x-1;
+            box.max.x = tree.position.x+1;
+            box.min.z = tree.position.z-1;
+            box.max.z = tree.position.z+1;
             objectBoundingBoxes.push(box);
 
-            // const boxHelper = new THREE.Box3Helper(box, 0x0000ff); // blue outline
-            // scene.add(boxHelper);
+            const boxHelper = new THREE.Box3Helper(box, 0x0000ff); // blue outline
+            scene.add(boxHelper);
         }
     },
     undefined,
@@ -216,11 +227,11 @@ glbLoader.load(
             scene.add(tree);
 
             let box = new THREE.Box3().setFromObject(tree);
-            box.expandByScalar(0.5);
+            box.expandByScalar(-1);
             objectBoundingBoxes.push(box);
 
-            // const boxHelper = new THREE.Box3Helper(box, 0xffffff); // white outline
-            // scene.add(boxHelper);
+            const boxHelper = new THREE.Box3Helper(box, 0xffffff); // white outline
+            scene.add(boxHelper);
         }
     },
     undefined,
@@ -253,11 +264,11 @@ glbLoader.load(
             scene.add(tree);
 
             let box = new THREE.Box3().setFromObject(tree);
-            box.expandByScalar(0);
+            box.expandByScalar(-1);
             objectBoundingBoxes.push(box);
 
-            // const boxHelper = new THREE.Box3Helper(box, 0x00ff00); // Green outline
-            // scene.add(boxHelper);
+            const boxHelper = new THREE.Box3Helper(box, 0x00ff00); // Green outline
+            scene.add(boxHelper);
         }
     },
     undefined,
@@ -620,13 +631,13 @@ const updatePlayerMovement = (balloons) => {
         }
 
         // //debug bounding spheres
-        // let sphereGeometry = new THREE.SphereGeometry(balloon.geometry.boundingSphere.radius * 2, 16, 16);
-        // let sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
-        // let boundingSphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        let sphereGeometry = new THREE.SphereGeometry(balloon.geometry.boundingSphere.radius * 2, 16, 16);
+        let sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+        let boundingSphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
 
-        // boundingSphereMesh.position.copy(balloonPos);
-        // scene.add(boundingSphereMesh);
-        // boundingSpheres.push(boundingSphereMesh);
+        boundingSphereMesh.position.copy(balloonPos);
+        scene.add(boundingSphereMesh);
+        boundingSpheres.push(boundingSphereMesh);
     }
 
 
@@ -635,10 +646,10 @@ const updatePlayerMovement = (balloons) => {
     
         if (movementDirection.lengthSq() > 0) {
             movementDirection.normalize();
-            camera.position.addScaledVector(movementDirection, -0.2);
+            camera.position.addScaledVector(movementDirection, -0.05);
         }
     
-        playerProperties.velocity.set(-200*movementDirection.x, 0, -200*movementDirection.z);
+        playerProperties.velocity.set(-100*movementDirection.x, 0, -100*movementDirection.z);
     }
     
 };
