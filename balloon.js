@@ -16,32 +16,32 @@ export default class Balloon {
     static TYPES = {
         red: {
             color: Balloon.COLORS.red,
-            speed: 2,
+            speed: 2.0,
             becomes: undefined,
             size: 1.5,
         },
 
         blue: {
             color: Balloon.COLORS.blue,
-            speed: 4,
+            speed: 4.0,
             size: 1.25,
             becomes: undefined,
         },
         green: {
             color: Balloon.COLORS.green,
-            speed: 6,
+            speed: 6.0,
             size: 1,
             becomes: undefined,
         },
         yellow: {
             color: Balloon.COLORS.yellow,
-            speed: 8,
+            speed: 8.0,
             size: .75,
             becomes: undefined,
         },
         pink: {
             color: Balloon.COLORS.pink,
-            speed: 10,
+            speed: 10.0,
             size: 0.5,
             becomes: undefined,
         },
@@ -93,6 +93,9 @@ export default class Balloon {
         } else if (waypoints) {
             this.position = waypoints[0];
         }
+        this.direction = new THREE.Vector3(0.0, 0.0, 0.0);
+        this.lerping = false;
+        this.lerp =  new THREE.Vector3(0.0, 0.0, 0.0);
 
         const balloonMat = new THREE.MeshStandardMaterial({
             color: this.color,
@@ -142,23 +145,22 @@ export default class Balloon {
         this.balloon.material.color.set(this.color);
     }
 
-    animate(time, delta) {
-        this.balloon.position.y += Math.sin(time + this.randomOffset) * 0.01;
+    changeSpeed(speed) {
+        this.speed = speed;
+    }
 
+    setDirection() {
+        let direction = new THREE.Vector3(0, 0, 0);
         if (this.waypoints) {
             const waypoint = this.waypoints[this.waypointIndex];
             const nextWaypoint = this.waypoints[this.waypointIndex + 1];
-
             if (waypoint && nextWaypoint) {
-                const direction = new THREE.Vector3().subVectors(
+                direction = new THREE.Vector3().subVectors(
                     nextWaypoint,
                     waypoint
                 );
                 direction.normalize();
-                this.balloon.position.add(
-                    direction.multiplyScalar(this.speed * delta)
-                );
-
+ 
                 const horizontalPosition = new THREE.Vector2(
                     this.balloon.position.x,
                     this.balloon.position.z
@@ -170,6 +172,7 @@ export default class Balloon {
 
                 if (horizontalPosition.distanceTo(horizontalWaypoint) < 1) {
                     this.waypointIndex++;
+                    this.direction = direction;
                     // console.log("reached waypoint", this.waypointIndex);
                     if (this.waypointIndex >= this.waypoints.length - 1) {
                         // console.log("reached last waypoint");
@@ -179,5 +182,28 @@ export default class Balloon {
                 }
             }
         }
+        this.direction = direction;
+    }
+
+    animate(time, delta) {
+
+        if (!this.lerping) {
+            console.log("Setting direction to waypoint direction");
+            this.setDirection();
+            this.balloon.position.y += Math.sin(time + this.randomOffset) * 0.01;
+            this.balloon.position.addScaledVector(this.direction, this.speed * delta);
+        } else if (this.balloon.position == this.lerp) {
+            console.log(`Reached lerp position`);
+            this.lerping = false;
+        } else {
+            console.log(`Lerping in animate with lerp value <${this.lerp.x},${this.lerp.y},${this.lerp.z}>\n`)
+            console.log(`From current position <${this.balloon.position.x},${this.balloon.position.y},${this.balloon.position.z}>\n`)
+            this.balloon.position.lerp(this.lerp, 0.5); //move fast --> slow as final position is reached
+            if (this.balloon.position.distanceTo(this.lerp) < 0.1) {
+                this.balloon.position == this.lerp;
+                this.lerping = false
+            }
+        }
+       
     }
 }
