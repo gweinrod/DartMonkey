@@ -66,6 +66,14 @@ let isJumping = 0;
 const GRAVITY = -36;
 const JUMP_STRENGTH = 36;
 
+//bounding boxes for collision between player and world
+const objectBoundingBoxes = [];
+const playerBoundingBox = new THREE.Box3();
+let boundingSpheres = [];
+const playerSize = new THREE.Vector3(1.5, PLAYER_HEIGHT*0.5, 1.5);
+//const boxHelper = new THREE.Box3Helper(playerBoundingBox, 0x00ff00); // Green outline
+//scene.add(boxHelper);
+
 /* End Initializations */
 
 /* Transformations */
@@ -131,6 +139,21 @@ glbLoader.load(
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
+
+            //need to manually set x and z max and min
+
+            let box = new THREE.Box3().setFromObject(tree);
+            box.expandByScalar(-15);
+            box.min.y = 0;
+            box.max.y = 25;
+            box.min.x = tree.position.x-2;
+            box.max.x = tree.position.x+2;
+            box.min.z = tree.position.z-2;
+            box.max.z = tree.position.z+2;
+            objectBoundingBoxes.push(box); 
+
+            // const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -161,6 +184,18 @@ glbLoader.load(
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
+
+            let box = new THREE.Box3().setFromObject(tree);
+            box.expandByScalar(-2);
+            box.min.y = 0;
+            box.min.x = tree.position.x-1;
+            box.max.x = tree.position.x+1;
+            box.min.z = tree.position.z-1;
+            box.max.z = tree.position.z+1;
+            objectBoundingBoxes.push(box);
+
+            // const boxHelper = new THREE.Box3Helper(box, 0x0000ff); // blue outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -191,6 +226,13 @@ glbLoader.load(
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
+
+            let box = new THREE.Box3().setFromObject(tree);
+            box.expandByScalar(-1);
+            objectBoundingBoxes.push(box);
+
+            // const boxHelper = new THREE.Box3Helper(box, 0xffffff); // white outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -221,6 +263,14 @@ glbLoader.load(
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
+
+            let box = new THREE.Box3().setFromObject(tree);
+            box.min.y = 0;
+            box.expandByScalar(-1);
+            objectBoundingBoxes.push(box);
+
+            // const boxHelper = new THREE.Box3Helper(box, 0x00ff00); // Green outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -450,7 +500,7 @@ const getYawFromQuaternion = (q) => {
     return euler.y;
 };
 
-const updatePlayerMovement = () => {
+const updatePlayerMovement = (balloons) => {
     const inputDirection = new THREE.Vector3();
 
     const forward = new THREE.Vector3(0, 0, -1);
@@ -490,11 +540,113 @@ const updatePlayerMovement = () => {
         playerYVelocity += GRAVITY * delta;
     }
 
+    // Update velocity
     playerProperties.velocity.set(
         playerXZVelocity.x,
         playerYVelocity,
         playerXZVelocity.z
     );
+
+    // Prevent the player from leaving the world
+    const sphereCenter = new THREE.Vector3(0, 0, 0); // Center of the sphere (assuming the ground is y = 0)
+    const sphereRadius = WORLDSIZE - 5; // Define world boundary with a small buffer
+
+    // Keep player on ground level
+    camera.position.y = Math.max(0, Math.min(WORLDSIZE - 5, camera.position.y)); // Clamp Y
+
+    // Compute 2D position on the X-Z plane
+    const playerXZ = new THREE.Vector2(camera.position.x, camera.position.z);
+    const distanceFromCenter = playerXZ.length();
+
+    if (distanceFromCenter > sphereRadius) {
+        // Clamp movement within the circular boundary
+        playerXZ.normalize().multiplyScalar(sphereRadius);
+        camera.position.x = playerXZ.x;
+        camera.position.z = playerXZ.y;
+    }
+
+
+
+    playerBoundingBox.setFromCenterAndSize(camera.position, playerSize);
+    playerBoundingBox.expandByScalar(-0.5); 
+
+    let treeLogCollisionDetected = false;
+    let balloonCollisionDetected = true;
+    let collidedBalloon = null;
+
+    for (const objectBox of objectBoundingBoxes) {
+        if (playerBoundingBox.intersectsBox(objectBox)) {
+            console.log("tree/log collision");
+            treeLogCollisionDetected = true;
+            break;
+        }
+    }
+
+    boundingSpheres.forEach(sphere => {
+        scene.remove(sphere);
+    });
+    boundingSpheres = [];
+
+    let collidedBalloonPos = new THREE.Vector3();
+
+    //remove previous bounding spheres
+    boundingSpheres.forEach(sphere => scene.remove(sphere));
+    boundingSpheres = [];
+
+    //handle balloon collisions
+    for (let j = balloons.length - 1; j >= 0; j--) {
+        let balloon = balloons[j].balloon;
+        let balloonPos = new THREE.Vector3();
+        balloon.getWorldPosition(balloonPos);
+
+        let balloonBox = new THREE.Box3().setFromCenterAndSize(
+            balloonPos, 
+            new THREE.Vector3(
+                balloon.geometry.boundingSphere.radius * 2,
+                balloon.geometry.boundingSphere.radius * 2,
+                balloon.geometry.boundingSphere.radius * 2
+            )
+        );
+
+        if (playerBoundingBox.intersectsBox(balloonBox)) {
+            console.log("Balloon-player collision");
+
+            let bounceDirection = new THREE.Vector3(
+                playerProperties.velocity.x, 
+                Math.abs(playerProperties.velocity.y)+0.5, //slight upward motion
+                playerProperties.velocity.z
+            );
+
+            if (bounceDirection.lengthSq() > 0) {
+                bounceDirection.normalize();
+                balloon.position.addScaledVector(bounceDirection, 0.5); 
+            }
+
+            break;
+        }
+
+        // //debug bounding spheres
+        // let sphereGeometry = new THREE.SphereGeometry(balloon.geometry.boundingSphere.radius * 2, 16, 16);
+        // let sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+        // let boundingSphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+
+        // boundingSphereMesh.position.copy(balloonPos);
+        // scene.add(boundingSphereMesh);
+        // boundingSpheres.push(boundingSphereMesh);
+    }
+
+
+    if (treeLogCollisionDetected) {
+        let movementDirection = new THREE.Vector3(playerProperties.velocity.x, 0, playerProperties.velocity.z);
+    
+        if (movementDirection.lengthSq() > 0) {
+            movementDirection.normalize();
+            camera.position.addScaledVector(movementDirection, -0.05);
+        }
+    
+        playerProperties.velocity.set(-100*movementDirection.x, 0, -100*movementDirection.z);
+    }
+    
 };
 
 //remove out of bounds darts
@@ -809,6 +961,7 @@ function animate() {
         balloons.push(
             new Balloon({ type: balloonType, waypoints }, scene)
         );
+      
         balloonTimer = 0;
         balloonIndex++;
         
@@ -830,7 +983,7 @@ function animate() {
         }
     }
 
-    updatePlayerMovement();
+    updatePlayerMovement(balloons);
 
     //engage automatic fire on long mouse hold
     if (firing && !automatic) {
@@ -875,6 +1028,8 @@ function animate() {
     // TODO: Apply Shaders
 
     renderer.render(scene, camera);
+
+    //boxHelper.updateMatrixWorld(true);
 }
 animate();
 
