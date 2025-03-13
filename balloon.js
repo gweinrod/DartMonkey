@@ -18,32 +18,38 @@ export default class Balloon {
             color: Balloon.COLORS.red,
             speed: 2.0,
             becomes: undefined,
-            size: 1.5,
+            size: 1,
+            score: 50
         },
-
         blue: {
             color: Balloon.COLORS.blue,
-            speed: 4.0,
-            size: 1.25,
-            becomes: undefined,
+            speed: 3.5,
+            size: 1,
+            becomes: "red",
+            score: 40
         },
         green: {
             color: Balloon.COLORS.green,
-            speed: 6.0,
-            size: 1,
-            becomes: undefined,
+            speed: 6,
+            size: 0.9,
+            becomes: "blue",
+            score: 30
+
         },
         yellow: {
             color: Balloon.COLORS.yellow,
-            speed: 8.0,
-            size: .75,
-            becomes: undefined,
+            speed: 8,
+            size: 1.1,
+            becomes: "green",
+            score: 20
         },
         pink: {
             color: Balloon.COLORS.pink,
-            speed: 10.0,
-            size: 0.5,
-            becomes: undefined,
+            speed: 11,
+
+            size: 0.75,
+            becomes: "yellow",
+            score: 10
         },
     };
 
