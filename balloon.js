@@ -16,28 +16,32 @@ export default class Balloon {
     static TYPES = {
         red: {
             color: Balloon.COLORS.red,
-            speed: 3,
+            speed: 2.0,
             becomes: undefined,
             size: 1,
+            score: 50
         },
-
         blue: {
             color: Balloon.COLORS.blue,
             speed: 3.5,
             size: 1,
             becomes: "red",
+            score: 40
         },
         green: {
             color: Balloon.COLORS.green,
             speed: 6,
             size: 0.9,
             becomes: "blue",
+            score: 30
+
         },
         yellow: {
             color: Balloon.COLORS.yellow,
             speed: 8,
             size: 1.1,
             becomes: "green",
+            score: 20
         },
         pink: {
             color: Balloon.COLORS.pink,
@@ -45,6 +49,7 @@ export default class Balloon {
 
             size: 0.75,
             becomes: "yellow",
+            score: 10
         },
     };
 
@@ -94,11 +99,14 @@ export default class Balloon {
         } else if (waypoints) {
             this.position = waypoints[0];
         }
+        this.direction = new THREE.Vector3(0.0, 0.0, 0.0);
+        this.lerping = false;
+        this.lerp =  new THREE.Vector3(0.0, 0.0, 0.0);
 
         const balloonMat = new THREE.MeshStandardMaterial({
             color: this.color,
             roughness: 0.3,
-            metalness: 0.2,
+            metalness: 0.2
         });
 
         this.balloon = new THREE.Mesh(
@@ -143,23 +151,22 @@ export default class Balloon {
         this.balloon.material.color.set(this.color);
     }
 
-    animate(time, delta) {
-        this.balloon.position.y += Math.sin(time + this.randomOffset) * 0.01;
+    changeSpeed(speed) {
+        this.speed = speed;
+    }
 
+    setDirection() {
+        let direction = new THREE.Vector3(0, 0, 0);
         if (this.waypoints) {
             const waypoint = this.waypoints[this.waypointIndex];
             const nextWaypoint = this.waypoints[this.waypointIndex + 1];
-
             if (waypoint && nextWaypoint) {
-                const direction = new THREE.Vector3().subVectors(
+                direction = new THREE.Vector3().subVectors(
                     nextWaypoint,
                     waypoint
                 );
                 direction.normalize();
-                this.balloon.position.add(
-                    direction.multiplyScalar(this.speed * delta)
-                );
-
+ 
                 const horizontalPosition = new THREE.Vector2(
                     this.balloon.position.x,
                     this.balloon.position.z
@@ -171,6 +178,7 @@ export default class Balloon {
 
                 if (horizontalPosition.distanceTo(horizontalWaypoint) < 1) {
                     this.waypointIndex++;
+                    this.direction = direction;
                     // console.log("reached waypoint", this.waypointIndex);
                     if (this.waypointIndex >= this.waypoints.length - 1) {
                         // console.log("reached last waypoint");
@@ -180,5 +188,28 @@ export default class Balloon {
                 }
             }
         }
+        this.direction = direction;
+    }
+
+    animate(time, delta) {
+
+        if (!this.lerping) {
+            console.log("Setting direction to waypoint direction");
+            this.setDirection();
+            this.balloon.position.y += Math.sin(time + this.randomOffset) * 0.01;
+            this.balloon.position.addScaledVector(this.direction, this.speed * delta);
+        } else if (this.balloon.position == this.lerp) {
+            console.log(`Reached lerp position`);
+            this.lerping = false;
+        } else {
+            console.log(`Lerping in animate with lerp value <${this.lerp.x},${this.lerp.y},${this.lerp.z}>\n`)
+            console.log(`From current position <${this.balloon.position.x},${this.balloon.position.y},${this.balloon.position.z}>\n`)
+            this.balloon.position.lerp(this.lerp, 0.5); //move fast --> slow as final position is reached
+            if (this.balloon.position.distanceTo(this.lerp) < 0.1) {
+                this.balloon.position == this.lerp;
+                this.lerping = false
+            }
+        }
+       
     }
 }
