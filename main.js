@@ -88,8 +88,9 @@ let score = 0;
 //grass
 let grassMaterial = new THREE.MeshPhongMaterial({
     color: 0x326732,
-    shininess: 1,
-    specular: new THREE.Color(0x165516)
+    shininess: 0.75,
+    specular: new THREE.Color(0x165516),
+    reflectivity: 1.0
 });
 
 //floor
@@ -102,10 +103,16 @@ objLoader.load(FLOOR_OBJ, (level) => {
 
 //environment
 
+//sun
+let sunGeometry = new THREE.SphereGeometry(8, 32, 32);
+let sunMaterial = new THREE.MeshBasicMaterial({ color: 0xFFAAAA });
+let sun = new THREE.Mesh(sunGeometry, sunMaterial);
+scene.add(sun);
+sun.position.set(55, 55, 55);
+
+
 //trees
 let trees = [];
-
-
 
 const TREES_MIN=5;
 const TREES_MAX=15;
@@ -397,16 +404,23 @@ window.addEventListener("resize", onWindowResize, false);
 
 /* Lighting */
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
-directionalLight.position.set(10, 20, 10);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+directionalLight.position.clone(sun.position);
+directionalLight.lookAt(new THREE.Vector3(0,0,0));
 scene.add(directionalLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 0.5);
-pointLight.position.set(10, 5, -5);
-scene.add(pointLight);
+// Sun Light
+let sunLight = new THREE.PointLight(0xFFAAAA, 1, 0, 3);
+sunLight.position.clone(sun.position);
+sun.attach(sunLight);
+scene.add(sunLight);
 
-const ambientLight = new THREE.AmbientLight(0x404040, 5);
+sunLight.power = 5000;
+
+const ambientLight = new THREE.AmbientLight(0x000050, 2);
 scene.add(ambientLight);
+const ambientLight2 = new THREE.AmbientLight(0xAAAAFFF, 0.2);
+scene.add(ambientLight2);
 
 /* End Lighting */
 
@@ -567,8 +581,6 @@ const updatePlayerMovement = (balloons) => {
         camera.position.x = playerXZ.x;
         camera.position.z = playerXZ.y;
     }
-
-
 
     playerBoundingBox.setFromCenterAndSize(camera.position, playerSize);
     playerBoundingBox.expandByScalar(-0.5); 
@@ -801,9 +813,9 @@ function bounceBalloons(balloons) {
 
                         //jitter directions
                         //console.log(`Edge case, exactly equal directions, jittering directions...\n`);
-                        let dx = (Math.random() - 0.5) * 1.0; 
-                        let dy = (Math.random() - 0.5) * 1.0; 
-                        let dz = (Math.random() - 0.5) * 1.0;
+                        let dx = (Math.random() - 0.5) * 5.0; 
+                        let dy = (Math.random() - 0.5) * 5.0; 
+                        let dz = (Math.random() - 0.5) * 5.0;
                         let delta = new THREE.Vector3(dx, dy, dz).normalize();
                         //console.log(`Adding the direction vector <${delta.x},${delta.y},${delta.z}>\n`)
                         //console.log(`To the direction of the balloon <${balloons[i].direction.x},${balloons[i].direction.y},${balloons[i].direction.z}>\n`)
