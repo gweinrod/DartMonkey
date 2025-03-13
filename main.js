@@ -17,14 +17,15 @@ const TREE_A_MTL = "/models/LowPoly_TREE_A.mtl";
 const WORLDSIZE = 100;
 const SKYBLUE = 0x8bdafc;
 const PLAYER_HEIGHT = 3;
-const BALLOON_MIN_Y = 4;
+const BALLOON_MIN_Y = 6;
 const FLOOR_Y = 0;
 const FOV = 60;
 const ASPECT = window.innerWidth / window.innerHeight;
 const NEAR = 0.1;
 const FAR = WORLDSIZE * 2;
-const FIRE_RATE = 5; //darts per second
+const FIRE_RATE = 6; //darts per second
 const DART_SIZE = 3;
+const LERP_TOL = 2; //divided by 10 units allowed overlap between balloons
 
 //scene and camera
 const scene = new THREE.Scene();
@@ -56,14 +57,14 @@ let moves = {
 const playerProperties = {
     velocity: new THREE.Vector3(0, 0, 0),
     ACCELERATION: 5,
-    MAX_XZ_SPEED: 30,
-    FRICTION: 0.85,
+    MAX_XZ_SPEED: 20,
+    FRICTION: 0.10,
 };
 
 //physics elements for jumping
 let isJumping = 0;
-const GRAVITY = -30;
-const JUMP_STRENGTH = 20;
+const GRAVITY = -36;
+const JUMP_STRENGTH = 36;
 
 //bounding boxes for collision between player and world
 const objectBoundingBoxes = [];
@@ -367,18 +368,6 @@ function createBalloonWithWaypoints(color, waypoints) {
     balloons.push(new Balloon({ color, waypoints }, scene));
 }
 
-//balloon matrix
-let balloon_demo_x = -20;
-for (const color in Balloon.COLORS) {
-    for (let i = 0; i <= 20; i += 10) {
-        createBalloon(
-            Balloon.COLORS[color],
-            new THREE.Vector3(balloon_demo_x, i+FLOOR_Y+BALLOON_MIN_Y, 0)
-        );
-    }
-    balloon_demo_x += 10;
-}
-
 /* End Geometries */
 
 /* Camera */
@@ -539,7 +528,7 @@ const updatePlayerMovement = (balloons) => {
         );
         playerXZVelocity.clampLength(0, playerProperties.MAX_XZ_SPEED);
     } else {
-        playerXZVelocity.multiplyScalar(playerProperties.FRICTION);
+        playerXZVelocity.multiplyScalar(1-playerProperties.FRICTION);
         if (playerXZVelocity.lengthSq() < 0.001) {
             playerXZVelocity.set(0, 0, 0);
         }
@@ -660,9 +649,40 @@ const updatePlayerMovement = (balloons) => {
     
 };
 
+//remove out of bounds darts
+function removeDarts(darts) {
+    for (let i = darts.length - 1; i >= 0; i--) {
+        let position = new THREE.Vector3();
+        darts[i].dart.getWorldPosition(position);
+
+        if (!(skyGeometry.boundingSphere.containsPoint(position))) {
+            console.log(`Removing out of bounds dart ${i}\n`);
+            scene.remove(darts[i].dart);
+            darts.splice(i, 1);
+        }
+    }
+};
+
+//remove out of bounds balloons
+function removeBalloons(balloons) {
+    for (let i = balloons.length - 1; i >= 0; i--) {
+        let position = new THREE.Vector3();
+        balloons[i].balloon.getWorldPosition(position);
+
+        if (!(skyGeometry.boundingSphere.containsPoint(position))) {
+            console.log(`Removing out of bounds balloon ${i}\n`);
+            scene.remove(balloons[i].balloon);
+            balloons.splice(i, 1);
+        }
+    }
+};
 
 //collision detection
 function checkCollisions(darts, balloons) {
+
+    removeDarts(darts);
+    removeBalloons(balloons);
+
     //loop through all darts
     for (let i = darts.length - 1; i >= 0; i--) {
         //get dart
@@ -674,15 +694,9 @@ function checkCollisions(darts, balloons) {
         dartDir.normalize();
         dartPos = dartPos.add(dartDir.multiplyScalar(DART_SIZE / 2)); //tip of dart
 
-        //remove out of bounds darts
-        if (!skyGeometry.boundingSphere.containsPoint(dartPos)) {
-            scene.remove(dart);
-            darts.splice(i, 1);
-            continue;
-        }
-
         //loop through all balloons for each dart
         for (let j = balloons.length - 1; j >= 0; j--) {
+
             //get balloon
             let balloon = balloons[j].balloon;
             let balloonPos = new THREE.Vector3();
@@ -694,24 +708,164 @@ function checkCollisions(darts, balloons) {
                 balloon.geometry.boundingSphere.radius
             );
 
-            //delete both dart and balloon if collision detected - can be changed to just delete balloon later?
+            //delete balloon
             if (balloonVicinity.containsPoint(dartPos)) {
                 console.log("collision detected: dart %d hit Balloon %d", i, j);
-
                 if (balloons[j].pop()) {
                     scene.remove(balloon);
                     balloons.splice(j, 1);
                 }
-                scene.remove(dart);
-                darts.splice(i, 1);
-                //stop checking once we do the removal
-                //break;
             }
 
             //TODO collide with tree and stick, remove dart from array (not scene)
         }
     }
 }
+
+function bounceBalloons(balloons) {
+
+    //loop through all balloons...
+    for (let i = balloons.length - 2; i >= 0; i--) {
+        
+        let balloon = balloons[i].balloon;  //balloon refers to the mesh while balloons[i] refers to the object
+        let balloonPos = new THREE.Vector3();
+        balloon.getWorldPosition(balloonPos);
+
+        //...for each balloon
+        for (let j = balloons.length - 1; j >= 0; j--) {
+
+            if (balloon == null) continue;  //removed
+            else if (i == j) continue;  //same
+
+            //get second balloon
+            let other_balloon = balloons[j].balloon;
+            let otherPos = new THREE.Vector3();
+            other_balloon.getWorldPosition(otherPos);
+
+            //if the centers are within their radii added...
+            let bounce = balloon.geometry.boundingSphere.radius + other_balloon.geometry.boundingSphere.radius
+            let distance = balloonPos.distanceTo(otherPos);
+            //console.log(`balloons ${i} and ${j} are ${distance} units apart and will collide when ${bounce} units apart\n`);
+
+            //get normal direction between balloons
+            let normal = new THREE.Vector3();
+            normal.subVectors(otherPos, balloonPos).normalize();
+            //console.log(`Normal direction (of collision) is <${normal.x},${normal.y},${normal.z}>`);
+            //console.log(`Speeds of balloons 1 and 2 are ${balloons[i].speed} and ${balloons[j].speed}\n`);
+
+            //collision detected
+            if (distance <= (bounce + LERP_TOL / 5)) {
+
+                //console.log(`Bouncing balloons ${i} and ${j}\n`);
+                //console.log(`Balloon direction is <${balloons[i].direction.x},${balloons[i].direction.y},${balloons[i].direction.z}>`);
+                //console.log(`Other balloon direction is <${balloons[j].direction.x},${balloons[j].direction.y},${balloons[j].direction.z}>`);
+
+                //lerp if inside one another
+                let tolerance = LERP_TOL / 5;
+                if ((bounce - distance) > tolerance) { 
+                    balloons[i].lerping = true;
+                    balloons[j].lerping = true;
+                    distance += (tolerance / 10);
+                    balloons[i].lerp.copy(balloonPos).addScaledVector(normal, (distance - bounce) / 2); //set lerp location
+                    balloons[j].lerp.copy(otherPos).addScaledVector(normal, (bounce - distance) / 2);
+                    balloons[i].lerp.y = Math.max(balloons[i].radius*1.3, balloons[i].lerp.y);
+                    balloons[j].lerp.y = Math.max(balloons[j].radius*1.3, balloons[j].lerp.y);
+                    //console.log(`Set first balloon's lerp to <${balloons[i].lerp.x},${balloons[i].lerp.y},${balloons[i].lerp.z}>\n`);
+                    //console.log(`Set other balloon's lerp to <${balloons[j].lerp.x},${balloons[j].lerp.y},${balloons[j].lerp.z}>\n`);
+                
+                //otherwise change directions and speeds according to momentums
+                } else {
+
+                    //get normal component of balloon directions (the direction of collision, the parallel component)
+                    let balloon_n = new THREE.Vector3();
+                    balloon_n.copy(normal);
+                    balloon_n.multiplyScalar(balloon_n.dot(balloons[i].direction));
+                    let other_n = new THREE.Vector3();
+                    other_n.copy(normal);
+                    other_n.multiplyScalar(other_n.dot(balloons[j].direction));
+
+                    //edge case traveling in the exact same direction
+                    //CHANGE to if the difference between the directions length is <....
+                    if ((balloon_n.x == 0) && (balloon_n.y == 0) && (balloon_n.z == 0)) {
+
+                        //jitter directions
+                        //console.log(`Edge case, exactly equal directions, jittering directions...\n`);
+                        let dx = (Math.random() - 0.5) * 1.0; 
+                        let dy = (Math.random() - 0.5) * 1.0; 
+                        let dz = (Math.random() - 0.5) * 1.0;
+                        let delta = new THREE.Vector3(dx, dy, dz).normalize();
+                        //console.log(`Adding the direction vector <${delta.x},${delta.y},${delta.z}>\n`)
+                        //console.log(`To the direction of the balloon <${balloons[i].direction.x},${balloons[i].direction.y},${balloons[i].direction.z}>\n`)
+                        balloons[i].direction.addVectors(balloons[i].direction, delta);
+                        balloons[i].direction.normalize();
+                        balloons[j].direction.subVectors(balloons[j].direction, delta)
+                        balloons[j].direction.normalize();
+
+                        let normal = new THREE.Vector3();
+                        normal.subVectors(otherPos, balloonPos).normalize();
+
+                        //console.log(`Normalized to <${balloons[i].direction.x},${balloons[i].direction.y},${balloons[i].direction.z}>\n`)
+
+                        //redefine collision
+                        normal.subVectors(otherPos, balloonPos).normalize();  //normalize the direction of collision
+                        balloon_n.copy(normal);
+                        balloon_n.multiplyScalar(balloon_n.dot(balloons[i].direction));  //but not the collision components
+                        other_n.copy(normal);
+                        other_n.multiplyScalar(other_n.dot(balloons[j].direction)); //
+
+                    }
+                    
+                    //get perpendicular components of each balloon's direction - what  remains after considering the collision direction/normal component
+                    let balloon_p = new THREE.Vector3(); 
+                    balloon_p.subVectors(balloons[i].direction, balloon_n);
+                    let other_p = new THREE.Vector3();
+                    other_p.subVectors(balloons[j].direction, other_n);
+                    //console.log(`Perpendicular direction of balloon 1 is <${balloon_p.x},${balloon_p.y},${balloon_p.z}>`);
+                    //console.log(`Perpendicular direction of balloon 2 is <${other_p.x},${other_p.y},${other_p.z}>`);
+
+                    //scale normal components to velocities using speeds
+                    balloon_n.multiplyScalar(balloons[i].speed);
+                    other_n.multiplyScalar(balloons[j].speed);
+                    //console.log(`Normal velocity of balloon 1 is <${balloon_n.x},${balloon_n.y},${balloon_n.z}>`);
+                    //console.log(`Normal velocity of balloon 2 is <${other_n.x},${other_n.y},${other_n.z}>`);
+
+                    //scale perpendicular components
+                    balloon_p.multiplyScalar(balloons[i].speed);
+                    other_p.multiplyScalar(balloons[j].speed);
+
+                    //check relative collision direction
+                    if (balloon_n.dot(other_n) < 0) { //toward one another, swap normal components
+                        //console.log(`Heading toward one another\n`);
+                        let temp = new THREE.Vector3().copy(balloon_n);
+                        balloon_n.copy(other_n);
+                        other_n.copy(temp);
+                    } else { //away from one another, average
+                        let average = new THREE.Vector3().copy(balloon_n).add(other_n).multiplyScalar(0.5);
+                        balloon_n.copy(average);
+                        other_n.copy(average);
+                    }
+
+                    //recombine velocities into new direction
+                    let velocity = new THREE.Vector3().addVectors(balloon_n, balloon_p);
+                    let other_velocity = new THREE.Vector3().addVectors(other_n, other_p);
+
+                    //set new speeds
+                    balloons[i].changeSpeed(velocity.length());
+                    balloons[j].changeSpeed(other_velocity.length());
+
+                    //set new directions
+                    balloons[i].direction = velocity.normalize();
+                    balloons[j].direction = other_velocity.normalize();
+
+                };
+
+            }; //end collision
+
+        }; //end inner balloon loop
+    }; //end outer balloon loop
+
+};
+
 
 //no right clicking browser menus
 canvas.addEventListener(
@@ -777,7 +931,8 @@ function shootDart(direction) {
 /* Animate */
 
 let balloonTimer = 0;
-const balloonSpawnInterval = 2;
+let balloonIndex = 0;
+const balloonSpawnInterval = 1;
 function animate() {
     requestAnimationFrame(animate);
     time = clock.getElapsedTime();
@@ -796,34 +951,37 @@ function animate() {
             new THREE.Vector3(-28, BALLOON_MIN_Y, 32),
             new THREE.Vector3(-84, BALLOON_MIN_Y, 30),
         ];
-        let balloon = new Balloon({ type: Balloon.TYPES.pink, waypoints }, scene);
-        balloons.push(balloon);
 
-        // let box = new THREE.Box3().setFromObject(balloon);
-        // objectBoundingBoxes.push(box);
-        
+        let balloonType = Balloon.TYPES.red;
+        if ((balloonIndex % 5) == 1) balloonType = Balloon.TYPES.blue;
+        else if ((balloonIndex % 5) == 2) balloonType = Balloon.TYPES.green;
+        else if ((balloonIndex % 5) == 3) balloonType = Balloon.TYPES.yellow;
+        else if ((balloonIndex % 5) == 4) balloonType = Balloon.TYPES.pink;
+
+        balloons.push(
+            new Balloon({ type: balloonType, waypoints }, scene)
+        );
+      
         balloonTimer = 0;
+        balloonIndex++;
+        
     }
 
-    // TODO: Loop Balloons
+    // Loop Balloons
     for (let i = balloons.length - 1; i >= 0; i--) {
-        if (balloons[i].animate(time, delta)) {
+        if (balloons[i].animate(time, delta)) {  //true <==> balloon reached waypoint
             scene.remove(balloons[i].balloon);
             balloons.splice(i, 1);
         }
     }
 
-    // TODO: Loop Darts
+    // Loop Darts
     for (let i = darts.length - 1; i >= 0; i--) {
-        if (darts[i].animate(delta)) {
+        if (darts[i].animate(delta)) { //true <==> ?
             scene.remove(darts[i].dart);
             darts.splice(i, 1);
         }
     }
-
-    //disable controls
-    // TODO: Animate Character
-    // TODO: Move Camera
 
     updatePlayerMovement(balloons);
 
@@ -845,6 +1003,8 @@ function animate() {
     }
 
     checkCollisions(darts, balloons);
+
+    bounceBalloons(balloons);
 
     const cameraVelocity = playerProperties.velocity.clone();
     cameraVelocity.multiplyScalar(delta);
