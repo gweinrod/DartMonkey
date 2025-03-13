@@ -351,186 +351,6 @@ let skyMaterial = new THREE.MeshStandardMaterial({
 let sky = new THREE.Mesh(skyGeometry, skyMaterial);
 scene.add(sky);
 
-//define cube geometry
-const phong_material = new THREE.MeshPhongMaterial({
-    color: SKYBLUE, // Sky color
-    shininess: 100   // Shininess of the material
-});
-
-const l = 35;
-const positions = new Float32Array([
-    // Front face
-    -l, -l,  l, // 0
-     l, -l,  l, // 1
-     l,  l,  l, // 2
-    -l,  l,  l, // 3
-
-    // Left face
-    -l, -l, -l, // 4
-    -l, -l,  l, // 5
-    -l,  l,  l, // 6 
-    -l,  l, -l, // 7
-  
-    // Top face
-    -l, l, l, // 8
-    l, l, l, // 9
-    l, l, -l, // 10
-    -l, l, -l, // 11
-  
-    // Bottom face
-    -l, -l, l, // 12
-    -l, -l, -l, // 13
-    l, -l, -l, // 14
-    l, -l, l, // 15
-  
-    // Right face
-    l, -l, -l, // 16
-    l,  l, -l, // 17
-    l,  l,  l, // 18
-    l, -l,  l, // 19
-
-    // Back face
-    -l, -l,  -l, // 20
-    -l,  l,  -l,  // 21
-    l,  l,  -l, // 22
-    l, -l,  -l // 23
-  ]);
-  
-  const indices = [
-    // Front face
-    2, 1, 0,
-    3, 2, 0,
-  
-    // Left face
-    6, 5, 4,
-    7, 6, 4,
-  
-    // Top face
-    10, 9, 8,
-    11, 10, 8,
-  
-    // Bottom face
-    15, 13, 12,
-    15, 14, 13,
-  
-    // Right face
-    17, 16, 19,
-    18, 17, 19,
-
-    // Back face
-    23, 21, 20,
-    23, 22, 21
-  ];
-  
-  // Compute normals
-  const normals = new Float32Array([
-    // Front face
-    0, 0, -1,
-    0, 0, -1,
-    0, 0, -1,
-    0, 0, -1,
-  
-    // Left face
-    1, 0, 0,
-    1, 0, 0,
-    1, 0, 0,
-    1, 0, 0,
-  
-    // Top face
-    0, -1, 0,
-    0, -1, 0,
-    0, -1, 0,
-    0, -1, 0,
-  
-    // Bottom face
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
-    0, 1, 0,
-  
-    // Right face
-    -1, 0, 0, 
-    -1, 0, 0, 
-    -1, 0, 0, 
-    -1, 0, 0, 
-
-    // Back face
-    0, 0, 1, 
-    0, 0, 1, 
-    0, 0, 1, 
-    0, 0, 1
-  ]);
-
-const wireframe_vertices = new Float32Array([
-  // Front face
-      -l, -l, l,
-      l, -l, l,
-      l, -l, l,
-      l, l, l,
-      l, l, l,
-      -l, l, l,
-      -l, l, l,
-      -l, -l, l,
-
-  // Left face
-      -l, -l, l,
-      -l, l, l,
-      -l, l, l,
-      -l, l, -l,
-      -l, l, -l,
-      -l, -l, -l,
-      -l, -l, -l,
-      -l, -l, l,
-
-  // Top face
-      -l, l, -l,
-      -l, l, l,
-      -l, l, l,
-      l, l, l,
-      l, l, l,
-      l, l, -l,
-      l, l, -l,
-      -l, l, -l,
-
-  // Bottom face
-      l, -l, l,
-      l, -l, -l,
-      l, -l, -l,
-      -l, -l, -l,
-      -l, -l, -l,
-      -l, -l, l,
-      -l, -l, l,
-      l, -l, l,
-
-  // Right face
-      l, -l, l,
-      l, l, l,
-      l, l, l,
-      l, l, -l,
-      l, l, -l,
-      l, -l, -l,
-      l, -l, -l,
-      l, -l, l,
-
-  // Back face
-      -l, -l, -l,
-      -l, l, -l,
-      -l, l, -l,
-      l, l, -l,
-      l, l, -l,
-      l, -l, -l,
-      l, -l, -l,
-      -l, -l, -l
-]);
-
-//bounding boxes
-const custom_cube_geometry = new THREE.BufferGeometry();
-custom_cube_geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-custom_cube_geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
-custom_cube_geometry.setIndex(new THREE.BufferAttribute(new Uint16Array(indices), 1));
-let cube = new THREE.Mesh( custom_cube_geometry, phong_material );
-scene.add(cube);
-
 //cursor
 const cursorTexture = new THREE.TextureLoader().load("./images/cursor.png");
 const cursorMaterial = new THREE.SpriteMaterial({
@@ -759,7 +579,7 @@ const updatePlayerMovement = (balloons) => {
 
     for (const objectBox of objectBoundingBoxes) {
         if (playerBoundingBox.intersectsBox(objectBox)) {
-            console.log("tree/log collision");
+            //console.log("tree/log collision");
             treeLogCollisionDetected = true;
             break;
         }
@@ -792,7 +612,7 @@ const updatePlayerMovement = (balloons) => {
         );
 
         if (playerBoundingBox.intersectsBox(balloonBox)) {
-            console.log("Balloon-player collision");
+            //console.log("Balloon-player collision");
 
             let bounceDirection = new THREE.Vector3(
                 playerProperties.velocity.x, 
@@ -841,7 +661,7 @@ function removeDarts(darts) {
         darts[i].dart.getWorldPosition(position);
 
         if (!(skyGeometry.boundingSphere.containsPoint(position))) {
-            console.log(`Removing out of bounds dart ${i}\n`);
+            //console.log(`Removing out of bounds dart ${i}\n`);
             scene.remove(darts[i].dart);
             darts.splice(i, 1);
         }
@@ -855,7 +675,7 @@ function removeBalloons(balloons) {
         balloons[i].balloon.getWorldPosition(position);
 
         if (!(skyGeometry.boundingSphere.containsPoint(position))) {
-            console.log(`Removing out of bounds balloon ${i}\n`);
+            //console.log(`Removing out of bounds balloon ${i}\n`);
             scene.remove(balloons[i].balloon);
             balloons.splice(i, 1);
         }
@@ -895,7 +715,7 @@ function checkCollisions(darts, balloons) {
 
             //delete balloon
             if (balloonVicinity.containsPoint(dartPos)) {
-                console.log("collision detected: dart %d hit Balloon %d", i, j);
+                //console.log("collision detected: dart %d hit Balloon %d", i, j);
                 if (balloons[j].pop()) {
                     scene.remove(balloon);
                     balloons.splice(j, 1);
@@ -1094,7 +914,7 @@ document.addEventListener("mousedown", (e) => {
     firing = true;
 
     if (automatic) {
-        console.log("automatic fire off");
+        //console.log("automatic fire off");
         automatic = false;
     }
 });
@@ -1185,7 +1005,7 @@ function animate() {
     if (firing && !automatic) {
         felta += delta;
         if (felta >= 0.5) {
-            console.log("automatic fire");
+            //console.log("automatic fire");
             automatic = true;
         }
     }
