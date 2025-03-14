@@ -140,6 +140,7 @@ export default class Balloon {
         this.dartIDs[dartID] = true;
         if (this.type.becomes) {
             this.changeType(Balloon.TYPES[this.type.becomes]);
+            this.createParticleExplosion(scene);
             return false;
         } else {
             this.createParticleExplosion(scene);
