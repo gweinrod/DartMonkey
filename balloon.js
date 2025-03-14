@@ -19,29 +19,28 @@ export default class Balloon {
             speed: 2.0,
             becomes: undefined,
             size: 1,
-            score: 50
+            score: 50,
         },
         blue: {
             color: Balloon.COLORS.blue,
             speed: 3.5,
             size: 1,
             becomes: "red",
-            score: 40
+            score: 40,
         },
         green: {
             color: Balloon.COLORS.green,
             speed: 6,
             size: 0.9,
             becomes: "blue",
-            score: 30
-
+            score: 30,
         },
         yellow: {
             color: Balloon.COLORS.yellow,
             speed: 8,
             size: 1.1,
             becomes: "green",
-            score: 20
+            score: 20,
         },
         pink: {
             color: Balloon.COLORS.pink,
@@ -49,7 +48,7 @@ export default class Balloon {
 
             size: 0.75,
             becomes: "yellow",
-            score: 10
+            score: 10,
         },
     };
 
@@ -57,7 +56,7 @@ export default class Balloon {
 
     static BASE_RADIUS = 2;
 
-    type = Balloon.TYPES.red;
+    type;
 
     static generateBalloonGeometry(radius) {
         const geometry = new THREE.SphereGeometry(radius, 32, 32);
@@ -101,12 +100,12 @@ export default class Balloon {
         }
         this.direction = new THREE.Vector3(0.0, 0.0, 0.0);
         this.lerping = false;
-        this.lerp =  new THREE.Vector3(0.0, 0.0, 0.0);
+        this.lerp = new THREE.Vector3(0.0, 0.0, 0.0);
 
         const balloonMat = new THREE.MeshStandardMaterial({
             color: this.color,
             roughness: 0.3,
-            metalness: 0.2
+            metalness: 0.2,
         });
 
         this.balloon = new THREE.Mesh(
@@ -129,47 +128,63 @@ export default class Balloon {
             );
         }
 
+        this.dartIDs = {};
+
         scene.add(this.balloon);
     }
 
-    pop(scene) {
+    pop(scene, dartID) {
+        if (dartID in this.dartIDs) {
+            return false; // already popped
+        }
+        this.dartIDs[dartID] = true;
         if (this.type.becomes) {
             this.changeType(Balloon.TYPES[this.type.becomes]);
             return false;
         } else {
             this.createParticleExplosion(scene);
-            scene.remove(this.balloon);
             return true;
         }
     }
-    
+
     createParticleExplosion(scene) {
         if (!scene) return;
 
         console.log(this.color);
-    
+
         const particleCount = 100;
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         const velocities = new Float32Array(particleCount * 3);
-        const material = new THREE.PointsMaterial({color: this.color, size: 0.3, transparent: true, opacity: 1});
+        const material = new THREE.PointsMaterial({
+            color: this.color,
+            size: 0.3,
+            transparent: true,
+            opacity: 1,
+        });
         const particles = new THREE.Points(geometry, material);
-    
+
         for (let i = 0; i < particleCount; i++) {
             positions[i * 3] = this.balloon.position.x;
             positions[i * 3 + 1] = this.balloon.position.y;
             positions[i * 3 + 2] = this.balloon.position.z;
-    
+
             velocities[i * 3] = (Math.random() - 0.5) * 3; //x
             velocities[i * 3 + 1] = (Math.random() - 0.5) * 3; //y
             velocities[i * 3 + 2] = (Math.random() - 0.5) * 3; //z
         }
-    
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-        
+
+        geometry.setAttribute(
+            "position",
+            new THREE.BufferAttribute(positions, 3)
+        );
+        geometry.setAttribute(
+            "velocity",
+            new THREE.BufferAttribute(velocities, 3)
+        );
+
         scene.add(particles);
-    
+
         let elapsed = 0;
 
         const animateParticles = () => {
@@ -178,21 +193,20 @@ export default class Balloon {
                 scene.remove(particles);
                 return;
             }
-    
+
             for (let i = 0; i < particleCount; i++) {
                 positions[i * 3] += velocities[i * 3] * 0.1; // x
                 positions[i * 3 + 1] += velocities[i * 3 + 1] * 0.1; //y
                 positions[i * 3 + 2] += velocities[i * 3 + 2] * 0.1; //z
             }
-    
-            material.opacity = Math.max(0, 1 - elapsed/2.0);
+
+            material.opacity = Math.max(0, 1 - elapsed / 2.0);
             geometry.attributes.position.needsUpdate = true;
             requestAnimationFrame(animateParticles);
         };
-    
+
         animateParticles();
-    }    
-    
+    }
 
     changeType(type) {
         this.type = type;
@@ -219,7 +233,7 @@ export default class Balloon {
                     waypoint
                 );
                 direction.normalize();
- 
+
                 const horizontalPosition = new THREE.Vector2(
                     this.balloon.position.x,
                     this.balloon.position.z
@@ -245,12 +259,15 @@ export default class Balloon {
     }
 
     animate(time, delta) {
-
         if (!this.lerping) {
             //console.log("Setting direction to waypoint direction");
             this.setDirection();
-            this.balloon.position.y += Math.sin(time + this.randomOffset) * 0.01;
-            this.balloon.position.addScaledVector(this.direction, this.speed * delta);
+            this.balloon.position.y +=
+                Math.sin(time + this.randomOffset) * 0.01;
+            this.balloon.position.addScaledVector(
+                this.direction,
+                this.speed * delta
+            );
         } else if (this.balloon.position == this.lerp) {
             //console.log(`Reached lerp position`);
             this.lerping = false;
@@ -260,9 +277,8 @@ export default class Balloon {
             this.balloon.position.lerp(this.lerp, 0.5); //move fast --> slow as final position is reached
             if (this.balloon.position.distanceTo(this.lerp) < 0.1) {
                 this.balloon.position == this.lerp;
-                this.lerping = false
+                this.lerping = false;
             }
         }
-       
     }
 }
