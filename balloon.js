@@ -100,7 +100,8 @@ export default class Balloon {
         }
         this.direction = new THREE.Vector3(0.0, 0.0, 0.0);
         this.lerping = false;
-        this.lerp = new THREE.Vector3(0.0, 0.0, 0.0);
+        this.lerp =  new THREE.Vector3(0.0, 0.0, 0.0);
+        this.lerpfactor = 0;
 
         const balloonMat = new THREE.MeshStandardMaterial({
             color: this.color,
@@ -258,25 +259,20 @@ export default class Balloon {
     }
 
     animate(time, delta) {
+        
         if (!this.lerping) {
             //console.log("Setting direction to waypoint direction");
             this.setDirection();
-            this.balloon.position.y +=
-                Math.sin(time + this.randomOffset) * 0.01;
-            this.balloon.position.addScaledVector(
-                this.direction,
-                this.speed * delta
-            );
-        } else if (this.balloon.position == this.lerp) {
-            //console.log(`Reached lerp position`);
-            this.lerping = false;
+            this.balloon.position.y += Math.sin(time + this.randomOffset) * 0.01;
+            this.balloon.position.addScaledVector(this.direction, this.speed * delta);
         } else {
             //console.log(`Lerping in animate with lerp value <${this.lerp.x},${this.lerp.y},${this.lerp.z}>\n`)
             //console.log(`From current position <${this.balloon.position.x},${this.balloon.position.y},${this.balloon.position.z}>\n`)
-            this.balloon.position.lerp(this.lerp, 0.5); //move fast --> slow as final position is reached
-            if (this.balloon.position.distanceTo(this.lerp) < 0.1) {
-                this.balloon.position == this.lerp;
-                this.lerping = false;
+            this.balloon.position.lerp(this.lerp, this.lerpfactor); //move fast --> slow as final position is reached
+            if (this.balloon.position.distanceTo(this.lerp) < 0.1 ) {
+                //this.balloon.position == this.lerp;
+                this.lerping = false
+
             }
         }
     }
