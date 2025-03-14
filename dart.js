@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { translationMatrix } from "./transformations";
+
+let dartID = 0;
 class DartGeometry extends THREE.BufferGeometry {
     //user defined, change
     static W_RATIO = 16; //ratio of dart length to width
@@ -338,6 +340,7 @@ export default class Dart {
 
         const dart = new THREE.Mesh(Dart.GEOMETRY, dartMat);
         this.dart = dart;
+        this.id = dartID++;
         this.state = Dart.STATES.flying;
         dart.position.copy(camera.position);
         scene.add(dart);
