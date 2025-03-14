@@ -145,14 +145,14 @@ export default class Balloon {
             return false; // already popped
         }
         this.dartIDs[dartID] = true;
-        if (this.type.becomes) {
-            this.createParticleExplosion(scene);
-            this.changeType(Balloon.TYPES[this.type.becomes]);
-            return false;
-        } else {
+        //if (this.type.becomes) {
+        //    this.createParticleExplosion(scene);
+        //    this.changeType(Balloon.TYPES[this.type.becomes]);
+        //    return false;
+        //} else {
             this.createParticleExplosion(scene);
             return true;
-        }
+        //}
     }
 
     createParticleExplosion(scene) {
@@ -215,13 +215,13 @@ export default class Balloon {
     }
 
     changeType(type) {
-        this.type = type;
-        this.color = type.color;
-        this.speed = type.speed;
-        this.radius = type.size * Balloon.BASE_RADIUS;
-        this.balloon.geometry.dispose();
-        this.balloon.geometry = Balloon.generateBalloonGeometry(this.radius);
-        this.balloon.material.color.setHex(this.color);
+        //this.type = type;
+        //this.color = type.color;
+        //this.speed = type.speed;
+        //this.radius = type.size * Balloon.BASE_RADIUS;
+        //this.balloon.geometry.dispose();
+        //this.balloon.geometry = Balloon.generateBalloonGeometry(this.radius);
+        //this.balloon.material.color.setHex(this.color);
     }
 
     changeSpeed(speed) {
@@ -376,13 +376,13 @@ createBalloonMaterial(materialProperties) {
 
             //** CUSTOM SHADER **//
             //use coefficients of human brightness perception
-            float brightness = 0.25 * color.x + 0.50 * color.y + 0.1 * color.z;
+            float brightness = 0.4 * color.x + 0.7 * color.y + 0.4 * color.z; //TODO adjust for dynamic balloon colors
 
-            float dark = 0.10;
-            float light = 0.85;
+            float dark = 0.02;
+            float light = 0.70;
 
             if (brightness <= dark) {
-                color.xyz = shape_color.xyz / 10.0;
+                color.xyz = shape_color.xyz / 3.0;
             } else if (brightness >= light) {
                 color.xyz = min(shape_color.xyz * 1.25, vec3(1.0));
             } else {

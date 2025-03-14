@@ -116,7 +116,6 @@ objLoader.load(FLOOR_OBJ, (level) => {
                 map: grassTexture,
                 displacementScale: 0.8,
                 displacementBias: -0.25,
-                specularity: 0.0,
                 roughness: 0.4,
             });
             const geometry = new THREE.PlaneGeometry(200, 200, 2000, 2000);
