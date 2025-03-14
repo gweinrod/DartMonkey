@@ -349,9 +349,14 @@ glbLoader.load(
     }
 );
 
+
 //sky
+const textureLoader = new THREE.TextureLoader();
+const skyTexture = textureLoader.load('./images/sky.jpeg');
+
 let skyGeometry = new THREE.SphereGeometry(WORLDSIZE, 32, 32);
 let skyMaterial = new THREE.MeshStandardMaterial({
+    map: skyTexture,
     color: SKYBLUE,
     side: THREE.BackSide,
 });
@@ -419,7 +424,7 @@ sunLight.power = 5000;
 
 const ambientLight = new THREE.AmbientLight(0x000050, 2);
 scene.add(ambientLight);
-const ambientLight2 = new THREE.AmbientLight(0xAAAAFFF, 0.2);
+const ambientLight2 = new THREE.AmbientLight(0xAAAAFFF, 0.5);
 scene.add(ambientLight2);
 
 /* End Lighting */
