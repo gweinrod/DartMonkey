@@ -238,7 +238,7 @@ glbLoader.load(
             scene.add(tree);
 
             let box = new THREE.Box3().setFromObject(tree);
-            box.expandByScalar(-1);
+            box.expandByScalar(0);
             objectBoundingBoxes.push(box);
 
             // const boxHelper = new THREE.Box3Helper(box, 0xffffff); // white outline
@@ -728,7 +728,7 @@ function checkCollisions(darts, balloons) {
             //delete balloon
             if (balloonVicinity.containsPoint(dartPos)) {
                 //console.log("collision detected: dart %d hit Balloon %d", i, j);
-                if (balloons[j].pop()) {
+                if (balloons[j].pop(scene)) {
                     scene.remove(balloon);
                     balloons.splice(j, 1);
                 }

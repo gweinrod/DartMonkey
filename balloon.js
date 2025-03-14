@@ -132,14 +132,67 @@ export default class Balloon {
         scene.add(this.balloon);
     }
 
-    pop() {
+    pop(scene) {
         if (this.type.becomes) {
             this.changeType(Balloon.TYPES[this.type.becomes]);
             return false;
         } else {
+            this.createParticleExplosion(scene);
+            scene.remove(this.balloon);
             return true;
         }
     }
+    
+    createParticleExplosion(scene) {
+        if (!scene) return;
+
+        console.log(this.color);
+    
+        const particleCount = 100;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const velocities = new Float32Array(particleCount * 3);
+        const material = new THREE.PointsMaterial({color: this.color, size: 0.3, transparent: true, opacity: 1});
+        const particles = new THREE.Points(geometry, material);
+    
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] = this.balloon.position.x;
+            positions[i * 3 + 1] = this.balloon.position.y;
+            positions[i * 3 + 2] = this.balloon.position.z;
+    
+            velocities[i * 3] = (Math.random() - 0.5) * 3; //x
+            velocities[i * 3 + 1] = (Math.random() - 0.5) * 3; //y
+            velocities[i * 3 + 2] = (Math.random() - 0.5) * 3; //z
+        }
+    
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+        
+        scene.add(particles);
+    
+        let elapsed = 0;
+
+        const animateParticles = () => {
+            elapsed += 0.05;
+            if (elapsed >= 2.0) {
+                scene.remove(particles);
+                return;
+            }
+    
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] += velocities[i * 3] * 0.1; // x
+                positions[i * 3 + 1] += velocities[i * 3 + 1] * 0.1; //y
+                positions[i * 3 + 2] += velocities[i * 3 + 2] * 0.1; //z
+            }
+    
+            material.opacity = Math.max(0, 1 - elapsed/2.0);
+            geometry.attributes.position.needsUpdate = true;
+            requestAnimationFrame(animateParticles);
+        };
+    
+        animateParticles();
+    }    
+    
 
     changeType(type) {
         this.type = type;
@@ -148,7 +201,7 @@ export default class Balloon {
         this.radius = type.size * Balloon.BASE_RADIUS;
         this.balloon.geometry.dispose();
         this.balloon.geometry = Balloon.generateBalloonGeometry(this.radius);
-        this.balloon.material.color.set(this.color);
+        this.balloon.material.color.setHex(this.color);
     }
 
     changeSpeed(speed) {
