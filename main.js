@@ -66,7 +66,7 @@ const playerProperties = {
 //physics elements for jumping
 let isJumping = 0;
 const GRAVITY = -36;
-const JUMP_STRENGTH = 36;
+const JUMP_STRENGTH = 30;
 
 //bounding boxes for collision between player and world
 const objectBoundingBoxes = [];
@@ -126,10 +126,11 @@ objLoader.load(FLOOR_OBJ, (level) => {
 });
 
 //environment
+const sunColor = 0xfff389;
 
 //sun
 let sunGeometry = new THREE.SphereGeometry(8, 32, 32);
-let sunMaterial = new THREE.MeshBasicMaterial({ color: 0xFFAAAA });
+let sunMaterial = new THREE.MeshBasicMaterial({ color: sunColor, opacity: 0.2, transparent: true });
 let sun = new THREE.Mesh(sunGeometry, sunMaterial);
 scene.add(sun);
 sun.position.set(55, 55, 55);
@@ -177,15 +178,16 @@ glbLoader.load(
             let box = new THREE.Box3().setFromObject(tree);
             box.expandByScalar(-15);
             box.min.y = 0;
-            box.max.y = 25;
-            box.min.x = tree.position.x - 2;
-            box.max.x = tree.position.x + 2;
-            box.min.z = tree.position.z - 2;
-            box.max.z = tree.position.z + 2;
+            box.max.y = 15;
+            box.min.x = tree.position.x - 1;
+            box.max.x = tree.position.x + 1;
+            box.min.z = tree.position.z - 1;
+            box.max.z = tree.position.z + 1;
+            box.expandByScalar(s);
             objectBoundingBoxes.push(box);
 
-            const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
-            scene.add(boxHelper);
+            // const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -436,17 +438,17 @@ directionalLight.lookAt(new THREE.Vector3(0,0,0));
 scene.add(directionalLight);
 
 // Sun Light
-let sunLight = new THREE.PointLight(0xFFAAAA, 1, 0, 3);
+let sunLight = new THREE.PointLight(sunColor, 1, 0, 3);
 sunLight.position.clone(sun.position);
-sun.attach(sunLight);
-scene.add(sunLight);
+sun.add(sunLight);
+// scene.add(sunLight);
 
-sunLight.power = 5000;
+sunLight.power = 500000;
 
-const ambientLight = new THREE.AmbientLight(0x000050, 2);
+const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
-const ambientLight2 = new THREE.AmbientLight(0xAAAAFFF, 0.5);
-scene.add(ambientLight2);
+// const ambientLight2 = new THREE.AmbientLight(0xAAAAFFF, 0.5);
+// scene.add(ambientLight2);
 
 /* End Lighting */
 
@@ -1175,7 +1177,7 @@ function animate() {
 
     // Loop Darts
     for (let i = darts.length - 1; i >= 0; i--) {
-        if (darts[i].animate(delta)) { //true <==> ?
+        if (darts[i].animate(delta)) { //true <==> dart lifetime expired
             scene.remove(darts[i].dart);
             darts.splice(i, 1);
         }
