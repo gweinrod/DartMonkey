@@ -116,7 +116,7 @@ objLoader.load(FLOOR_OBJ, (level) => {
                 map: grassTexture,
                 displacementScale: 0.8,
                 displacementBias: -0.25,
-
+                specularity: 0.0,
                 roughness: 0.4,
             });
             const geometry = new THREE.PlaneGeometry(200, 200, 2000, 2000);
@@ -448,20 +448,26 @@ window.addEventListener("resize", onWindowResize, false);
 /* Lighting */
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-directionalLight.position.clone(sun.position);
+directionalLight.position.copy(sun.position);
 directionalLight.lookAt(new THREE.Vector3(0,0,0));
+directionalLight.target.position.set(0, 0, 0);
 scene.add(directionalLight);
+scene.add(directionalLight.target);
+
 
 // Sun Light
 let sunLight = new THREE.PointLight(sunColor, 1, 0, 3);
-sunLight.position.clone(sun.position);
+sunLight.position.copy(sun.position);
 sun.add(sunLight);
 // scene.add(sunLight);
 
-sunLight.power = Math.pow(2,18);
+sunLight.power = Math.pow(2,8);
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
+
+const ambientLight2 = new THREE.AmbientLight(0x0000ff, 1);
+scene.add(ambientLight2);
 // const ambientLight2 = new THREE.AmbientLight(0xAAAAFFF, 0.5);
 // scene.add(ambientLight2);
 
@@ -963,8 +969,6 @@ function callWind(balloons, radius, min, max) {
             let jm = magnitude * (0.50); //+- 50%
             let delta = getJitter(jm, jm, jm);
 
-            //TODO : in balloon animate, tilt while lerping from wind
-
             //lerp to location
             direction.addVectors(direction, delta);
             balloons[i].lerping = true;
@@ -1029,6 +1033,8 @@ function bounceBalloons(balloons) {
                     balloons[j].lerp.copy(otherPos).addScaledVector(normal, (bounce - distance) / 2);
                     balloons[i].lerp.y = Math.max(balloons[i].radius*1.3, balloons[i].lerp.y);
                     balloons[j].lerp.y = Math.max(balloons[j].radius*1.3, balloons[j].lerp.y);
+
+                    
                     //console.log(`Set first balloon's lerp to <${balloons[i].lerp.x},${balloons[i].lerp.y},${balloons[i].lerp.z}>\n`);
                     //console.log(`Set other balloon's lerp to <${balloons[j].lerp.x},${balloons[j].lerp.y},${balloons[j].lerp.z}>\n`);
                 
@@ -1260,7 +1266,7 @@ function animate() {
             }
             balloons[i].position.y += Math.sin(time + balloons[i].randomOffset) * 0.01;
         }
-
+        balloons[i].updateBalloonMaterialUniforms(scene, camera);
     }
 
     // Loop Darts

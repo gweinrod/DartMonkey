@@ -1,6 +1,8 @@
 import * as THREE from "three";
 
+
 export default class Balloon {
+    
     static COLORS = {
         red: 0xff0000,
         green: 0x10cc10,
@@ -102,35 +104,39 @@ export default class Balloon {
         this.lerping = false;
         this.lerp =  new THREE.Vector3(0.0, 0.0, 0.0);
         this.lerpfactor = 0;
-
-        const balloonMat = new THREE.MeshStandardMaterial({
-            color: this.color,
-            roughness: 0.3,
-            metalness: 0.2,
+    
+        // Here's the fix - use this.color instead of hardcoded 0x80FFFF
+        const balloonMat = this.createBalloonMaterial({ 
+            color: this.color, 
+            ambient: 0.025, 
+            diffusivity: 0.25, 
+            specularity: 1.0, 
+            smoothness: 100.0 
         });
-
+    
         this.balloon = new THREE.Mesh(
             Balloon.generateBalloonGeometry(this.radius),
             balloonMat
         );
-
+    
+        // Rest of the constructor remains the same
         this.balloon.scale.set(1, 1.4, 1);
         if (position)
             this.balloon.position.set(position.x, position.y, position.z);
-
+    
         if (waypoints) {
             this.waypoints = waypoints;
             this.waypointIndex = 0;
-
+    
             this.balloon.position.set(
                 waypoints[0].x,
                 waypoints[0].y,
                 waypoints[0].z
             );
         }
-
+    
         this.dartIDs = {};
-
+    
         scene.add(this.balloon);
     }
 
@@ -258,22 +264,254 @@ export default class Balloon {
         this.direction = direction;
     }
 
+// Custom Phong Shader for Balloons
+createBalloonMaterial(materialProperties) {
+    const numLights = 1;
+    
+    // convert shape_color1 to a Vector4
+    let shape_color_representation = new THREE.Color(materialProperties.color);
+    let shape_color = new THREE.Vector4(
+        shape_color_representation.r,
+        shape_color_representation.g,
+        shape_color_representation.b,
+        1.0
+    );
+
+    // Vertex Shader
+    let vertexShader = `
+        precision mediump float;
+        const int N_LIGHTS = ${numLights};
+        uniform float ambient, diffusivity, specularity, smoothness;
+        uniform vec4 light_positions_or_vectors[N_LIGHTS];
+        uniform vec4 light_colors[N_LIGHTS];
+        uniform float light_attenuation_factors[N_LIGHTS];
+        uniform vec4 shape_color;
+        uniform vec3 squared_scale;
+        uniform vec3 camera_center;
+        varying vec3 N, vertex_worldspace;
+
+        // ***** PHONG SHADING HAPPENS HERE: *****
+        vec3 phong_model_lights(vec3 N, vec3 vertex_worldspace) {
+            vec3 E = normalize(camera_center - vertex_worldspace); // View direction
+            vec3 result = vec3(0.0); // Initialize the output color
+            for(int i = 0; i < N_LIGHTS; i++) {
+                // Calculate the vector from the surface to the light source
+                vec3 surface_to_light_vector = light_positions_or_vectors[i].xyz - 
+                    light_positions_or_vectors[i].w * vertex_worldspace;
+                float distance_to_light = length(surface_to_light_vector); // Light distance
+                vec3 L = normalize(surface_to_light_vector); // Light direction
+                
+                // Phong uses the reflection vector R
+                vec3 R = reflect(-L, N); // Reflect L around the normal N
+                
+                float diffuse = max(dot(N, L), 0.0); // Diffuse term
+                float specular = pow(max(dot(R, E), 0.0), smoothness); // Specular term
+                
+                // Light attenuation
+                float attenuation = 1.0 / (1.0 + light_attenuation_factors[i] * distance_to_light * distance_to_light);
+                
+                // Calculate the contribution of this light source
+                vec3 light_contribution = shape_color.xyz * light_colors[i].xyz * diffusivity * diffuse
+                                        + light_colors[i].xyz * specularity * specular;
+                result += attenuation * light_contribution;
+            }
+            return result;
+        }
+
+        uniform mat4 model_transform;
+        uniform mat4 projection_camera_model_transform;
+
+        void main() {
+            gl_Position = projection_camera_model_transform * vec4(position, 1.0);
+            N = normalize(mat3(model_transform) * normal / squared_scale);
+            vertex_worldspace = (model_transform * vec4(position, 1.0)).xyz;
+        }
+    `;
+
+    // Fragment Shader
+    let fragmentShader = `
+        precision mediump float;
+        const int N_LIGHTS = ${numLights};
+        uniform float ambient, diffusivity, specularity, smoothness;
+        uniform vec4 light_positions_or_vectors[N_LIGHTS];
+        uniform vec4 light_colors[N_LIGHTS];
+        uniform float light_attenuation_factors[N_LIGHTS];
+        uniform vec4 shape_color;
+        uniform vec3 camera_center;
+        varying vec3 N, vertex_worldspace;
+
+        // ***** PHONG SHADING HAPPENS HERE: *****
+        vec3 phong_model_lights(vec3 N, vec3 vertex_worldspace) {
+            vec3 E = normalize(camera_center - vertex_worldspace); // View direction
+            vec3 result = vec3(0.0); // Initialize the output color
+            for(int i = 0; i < N_LIGHTS; i++) {
+                // Calculate the vector from the surface to the light source
+                vec3 surface_to_light_vector = light_positions_or_vectors[i].xyz - 
+                    light_positions_or_vectors[i].w * vertex_worldspace;
+                float distance_to_light = length(surface_to_light_vector); // Light distance
+                vec3 L = normalize(surface_to_light_vector); // Light direction
+                
+                // Phong uses the reflection vector R
+                vec3 R = reflect(-L, N); // Reflect L around the normal N
+                
+                float diffuse = max(dot(N, L), 0.0); // Diffuse term
+                float specular = pow(max(dot(R, E), 0.0), smoothness); // Specular term
+                
+                // Light attenuation
+                float attenuation = 1.0 / (1.0 + light_attenuation_factors[i] * distance_to_light * distance_to_light);
+                
+                // Calculate the contribution of this light source
+                vec3 light_contribution = shape_color.xyz * light_colors[i].xyz * diffusivity * diffuse
+                                        + light_colors[i].xyz * specularity * specular;
+                result += attenuation * light_contribution;
+            }
+            return result;
+        }
+
+        void main() {
+            // Compute an initial (ambient) color:
+            vec4 color = vec4(shape_color.xyz * ambient, shape_color.w);
+            // Compute the final color with contributions from lights:
+            color.xyz += phong_model_lights(normalize(N), vertex_worldspace);
+
+            //** CUSTOM SHADER **//
+            //use coefficients of human brightness perception
+            float brightness = 0.25 * color.x + 0.50 * color.y + 0.1 * color.z;
+
+            float dark = 0.10;
+            float light = 0.85;
+
+            if (brightness <= dark) {
+                color.xyz = shape_color.xyz / 10.0;
+            } else if (brightness >= light) {
+                color.xyz = min(shape_color.xyz * 1.25, vec3(1.0));
+            } else {
+                color.xyz = shape_color.xyz;
+            }
+            //** END CUSTOM SHADER **//
+
+            gl_FragColor = color;
+        }
+    `;
+
+    // Prepare uniforms
+    const uniforms = {
+        ambient: { value: materialProperties.ambient },
+        diffusivity: { value: materialProperties.diffusivity },
+        specularity: { value: materialProperties.specularity },
+        smoothness: { value: materialProperties.smoothness },
+        shape_color: { value: shape_color },
+        squared_scale: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
+        camera_center: { value: new THREE.Vector3() },
+        model_transform: { value: new THREE.Matrix4() },
+        projection_camera_model_transform: { value: new THREE.Matrix4() },
+        light_positions_or_vectors: { value: [] },
+        light_colors: { value: [] },
+        light_attenuation_factors: { value: [] }
+    };
+
+    // Create the ShaderMaterial using the custom vertex and fragment shaders
+    return new THREE.ShaderMaterial({
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+        uniforms: uniforms
+    });
+}
+
+// Update uniforms
+updateBalloonMaterialUniforms(scene, camera) {
+    const material = this.balloon.material;
+    if (!material.uniforms) return;
+
+    const uniforms = material.uniforms;
+
+    const numLights = 1;
+    const lights = scene.children.filter(child => child.isLight).slice(0, numLights);
+    // Ensure we have the correct number of lights
+    if (lights.length < numLights) {
+        console.warn(`Expected ${numLights} lights, but found ${lights.length}. Padding with default lights.`);
+    }
+    
+    // Update model_transform and projection_camera_model_transform
+    this.balloon.updateMatrixWorld();
+    camera.updateMatrixWorld();
+
+    uniforms.model_transform.value.copy(this.balloon.matrixWorld);
+    uniforms.projection_camera_model_transform.value.multiplyMatrices(
+        camera.projectionMatrix,
+        camera.matrixWorldInverse
+    ).multiply(this.balloon.matrixWorld);
+
+    // Update camera_center
+    uniforms.camera_center.value.setFromMatrixPosition(camera.matrixWorld);
+
+    // Update squared_scale (in case the scale changes)
+    const scale = this.balloon.scale;
+    uniforms.squared_scale.value.set(
+        scale.x * scale.x,
+        scale.y * scale.y,
+        scale.z * scale.z
+    );
+
+    // Update light uniforms
+    uniforms.light_positions_or_vectors.value = [];
+    uniforms.light_colors.value = [];
+    uniforms.light_attenuation_factors.value = [];
+
+    for (let i = 0; i < numLights; i++) {
+        const light = lights[i];
+        if (light) {
+            let position = new THREE.Vector4();
+            if (light.isDirectionalLight) {
+                // For directional lights
+                const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(light.quaternion);
+                position.set(direction.x, direction.y, direction.z, 0.0);
+            } else if (light.position) {
+                // For point lights
+                position.set(light.position.x, light.position.y, light.position.z, 1.0);
+            } else {
+                // Default position
+                position.set(0.0, 0.0, 0.0, 1.0);
+            }
+            uniforms.light_positions_or_vectors.value.push(position);
+
+            // Update light color
+            const color = new THREE.Vector4(light.color.r, light.color.g, light.color.b, 1.0);
+            uniforms.light_colors.value.push(color);
+
+            // Update attenuation factor
+            let attenuation = 0.0;
+            if (light.isPointLight || light.isSpotLight) {
+                const distance = light.distance || 1000.0; // Default large distance
+                attenuation = 1.0 / (distance * distance);
+            } else if (light.isDirectionalLight) {
+                attenuation = 0.0; // No attenuation for directional lights
+            }
+            // Include light intensity
+            const intensity = light.intensity !== undefined ? light.intensity : 1.0;
+            attenuation *= intensity;
+
+            uniforms.light_attenuation_factors.value.push(attenuation);
+        } else {
+            // Default light values
+            uniforms.light_positions_or_vectors.value.push(new THREE.Vector4(0.0, 0.0, 0.0, 0.0));
+            uniforms.light_colors.value.push(new THREE.Vector4(0.0, 0.0, 0.0, 1.0));
+            uniforms.light_attenuation_factors.value.push(0.0);
+        }
+    }
+}
+
     animate(time, delta) {
-        
         if (!this.lerping) {
-            //console.log("Setting direction to waypoint direction");
             this.setDirection();
             this.balloon.position.y += Math.sin(time + this.randomOffset) * 0.01;
             this.balloon.position.addScaledVector(this.direction, this.speed * delta);
         } else {
-            //console.log(`Lerping in animate with lerp value <${this.lerp.x},${this.lerp.y},${this.lerp.z}>\n`)
-            //console.log(`From current position <${this.balloon.position.x},${this.balloon.position.y},${this.balloon.position.z}>\n`)
-            this.balloon.position.lerp(this.lerp, this.lerpfactor); //move fast --> slow as final position is reached
+            this.balloon.position.lerp(this.lerp, this.lerpfactor);
             if (this.balloon.position.distanceTo(this.lerp) < 0.1 ) {
-                //this.balloon.position == this.lerp;
                 this.lerping = false
-
             }
         }
     }
+
 }
