@@ -140,8 +140,8 @@ export default class Balloon {
         }
         this.dartIDs[dartID] = true;
         if (this.type.becomes) {
-            this.createParticleExplosion(scene);
             this.changeType(Balloon.TYPES[this.type.becomes]);
+            this.createParticleExplosion(scene);
             return false;
         } else {
             this.createParticleExplosion(scene);
@@ -151,6 +151,8 @@ export default class Balloon {
 
     createParticleExplosion(scene) {
         if (!scene) return;
+
+        console.log(this.color);
 
         const particleCount = 100;
         const geometry = new THREE.BufferGeometry();
