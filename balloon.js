@@ -100,7 +100,7 @@ export default class Balloon {
         }
         this.direction = new THREE.Vector3(0.0, 0.0, 0.0);
         this.lerping = false;
-        this.lerp =  new THREE.Vector3(0.0, 0.0, 0.0);
+        this.lerp = new THREE.Vector3(0.0, 0.0, 0.0);
 
         const balloonMat = new THREE.MeshStandardMaterial({
             color: this.color,
@@ -139,8 +139,8 @@ export default class Balloon {
         }
         this.dartIDs[dartID] = true;
         if (this.type.becomes) {
-            this.changeType(Balloon.TYPES[this.type.becomes]);
             this.createParticleExplosion(scene);
+            this.changeType(Balloon.TYPES[this.type.becomes]);
             return false;
         } else {
             this.createParticleExplosion(scene);
@@ -150,8 +150,6 @@ export default class Balloon {
 
     createParticleExplosion(scene) {
         if (!scene) return;
-
-        console.log(this.color);
 
         const particleCount = 100;
         const geometry = new THREE.BufferGeometry();
@@ -260,12 +258,15 @@ export default class Balloon {
     }
 
     animate(time, delta) {
-
         if (!this.lerping) {
             //console.log("Setting direction to waypoint direction");
             this.setDirection();
-            this.balloon.position.y += Math.sin(time + this.randomOffset) * 0.01;
-            this.balloon.position.addScaledVector(this.direction, this.speed * delta);
+            this.balloon.position.y +=
+                Math.sin(time + this.randomOffset) * 0.01;
+            this.balloon.position.addScaledVector(
+                this.direction,
+                this.speed * delta
+            );
         } else if (this.balloon.position == this.lerp) {
             //console.log(`Reached lerp position`);
             this.lerping = false;
@@ -275,8 +276,7 @@ export default class Balloon {
             this.balloon.position.lerp(this.lerp, 0.5); //move fast --> slow as final position is reached
             if (this.balloon.position.distanceTo(this.lerp) < 0.1) {
                 this.balloon.position == this.lerp;
-                this.lerping = false
-
+                this.lerping = false;
             }
         }
     }
