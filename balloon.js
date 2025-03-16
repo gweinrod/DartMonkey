@@ -4,13 +4,13 @@ import * as THREE from "three";
 export default class Balloon {
     
     static COLORS = {
-        red: 0xff0000,
-        green: 0x10cc10,
-        blue: 0x0000ff,
-        yellow: 0xffff00,
-        orange: 0xff7020,
-        purple: 0xff00ff,
-        pink: 0xffc0cb,
+        red: 0xff2222,
+        green: 0x22ff22,
+        blue: 0x2222ff,
+        yellow: 0xff2222,
+        orange: 0xff2222,
+        purple: 0xff22ff,
+        pink: 0xff22ff,
         white: 0xffffff,
         black: 0x000000,
     };
@@ -105,7 +105,6 @@ export default class Balloon {
         this.lerp =  new THREE.Vector3(0.0, 0.0, 0.0);
         this.lerpfactor = 0;
     
-        // Here's the fix - use this.color instead of hardcoded 0x80FFFF
         const balloonMat = this.createBalloonMaterial({ 
             color: this.color, 
             ambient: 0.025, 
@@ -119,7 +118,6 @@ export default class Balloon {
             balloonMat
         );
     
-        // Rest of the constructor remains the same
         this.balloon.scale.set(1, 1.4, 1);
         if (position)
             this.balloon.position.set(position.x, position.y, position.z);
@@ -365,6 +363,10 @@ createBalloonMaterial(materialProperties) {
                                         + light_colors[i].xyz * specularity * specular;
                 result += attenuation * light_contribution;
             }
+
+            
+
+
             return result;
         }
 
@@ -376,18 +378,38 @@ createBalloonMaterial(materialProperties) {
 
             //** CUSTOM SHADER **//
             //use coefficients of human brightness perception
-            float brightness = 0.4 * color.x + 0.7 * color.y + 0.4 * color.z; //TODO adjust for dynamic balloon colors
+            float brightness = ((1.0 / 1.0) * color.x + (1.0 / 1.0) * color.y + (1.0 / 1.0) * color.z); //TODO adjust for dynamic balloon colors
 
-            float dark = 0.02;
-            float light = 0.70;
+            float dark = 0.20;
+            float darker = 0.70;
+            float light = 0.001;
 
-            if (brightness <= dark) {
-                color.xyz = shape_color.xyz / 3.0;
-            } else if (brightness >= light) {
-                color.xyz = min(shape_color.xyz * 1.25, vec3(1.0));
-            } else {
+
+
+            if (brightness >= dark) { // we're very dark
+                color.xyz = shape_color.xyz / 3.0;  //
+            };
+
+            if (brightness >= darker) { // we're very dark
+                color.xyz = shape_color.xyz / 7.0;  //
+            };
+            
+
+
+
+            if (brightness <= light) { // very bright
+                //color.xyz = shape_color.xyz;
+                color.xyz = shape_color.xyz * 3.00;
+            }
+        
+            if (brightness > light && brightness < dark) {
                 color.xyz = shape_color.xyz;
             }
+          
+
+            color.xyz = min(color.xyz, vec3(1.0));
+            color.xyz = max(color.xyz, vec3(0.0));
+
             //** END CUSTOM SHADER **//
 
             gl_FragColor = color;
@@ -396,9 +418,9 @@ createBalloonMaterial(materialProperties) {
 
     // Prepare uniforms
     const uniforms = {
-        ambient: { value: materialProperties.ambient },
-        diffusivity: { value: materialProperties.diffusivity },
-        specularity: { value: materialProperties.specularity },
+        ambient: { value: 0.1 },
+        diffusivity: { value: 0.40 },
+        specularity: { value: 1.00 },
         smoothness: { value: materialProperties.smoothness },
         shape_color: { value: shape_color },
         squared_scale: { value: new THREE.Vector3(1.0, 1.0, 1.0) },
@@ -471,7 +493,7 @@ updateBalloonMaterialUniforms(scene, camera) {
                 position.set(light.position.x, light.position.y, light.position.z, 1.0);
             } else {
                 // Default position
-                position.set(0.0, 0.0, 0.0, 1.0);
+                position.set(55.0, 55.0, 55.0, 1.0);
             }
             uniforms.light_positions_or_vectors.value.push(position);
 

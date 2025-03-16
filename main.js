@@ -28,6 +28,9 @@ const DART_SIZE = 3;
 const LERP_TOL = 2; //divided by 10 units allowed overlap between balloons
 const WIND_INTERVAL = 2; //10 seconds
 const WAY_TIMER = 0.25;
+const SUNX = 55.0;
+const SUNY = 55.0;
+const SUNZ = 55.0;
 
 //scene and camera
 const scene = new THREE.Scene();
@@ -117,6 +120,7 @@ objLoader.load(FLOOR_OBJ, (level) => {
                 displacementScale: 0.8,
                 displacementBias: -0.25,
                 roughness: 0.4,
+                emissive: 0.0
             });
             const geometry = new THREE.PlaneGeometry(200, 200, 2000, 2000);
             floor.children[0] = new THREE.Mesh(geometry, grassMaterial);
@@ -134,7 +138,7 @@ let sunGeometry = new THREE.SphereGeometry(8, 32, 32);
 let sunMaterial = new THREE.MeshBasicMaterial({ color: sunColor, opacity: 0.2, transparent: true });
 let sun = new THREE.Mesh(sunGeometry, sunMaterial);
 scene.add(sun);
-sun.position.set(55, 55, 55);
+sun.position.set(SUNX, SUNY, SUNZ);
 
 
 //trees
@@ -396,6 +400,8 @@ let skyMaterial = new THREE.MeshStandardMaterial({
     map: skyTexture,
     color: SKYBLUE,
     side: THREE.BackSide,
+    emissive: 0.0
+    
 });
 let sky = new THREE.Mesh(skyGeometry, skyMaterial);
 scene.add(sky);
@@ -446,8 +452,8 @@ window.addEventListener("resize", onWindowResize, false);
 
 /* Lighting */
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-directionalLight.position.copy(sun.position);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+directionalLight.position.set(SUNX, SUNY, SUNZ);
 directionalLight.lookAt(new THREE.Vector3(0,0,0));
 directionalLight.target.position.set(0, 0, 0);
 scene.add(directionalLight);
@@ -456,17 +462,17 @@ scene.add(directionalLight.target);
 
 // Sun Light
 let sunLight = new THREE.PointLight(sunColor, 1, 0, 3);
-sunLight.position.copy(sun.position);
-sun.add(sunLight);
-// scene.add(sunLight);
+sunLight.position.set(SUNX, SUNY, SUNZ);
+sun.attach(sunLight);
+//scene.add(sunLight);
 
-sunLight.power = Math.pow(2,8);
+sunLight.power = Math.pow(2,16);
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
 scene.add(ambientLight);
 
-const ambientLight2 = new THREE.AmbientLight(0x0000ff, 1);
-scene.add(ambientLight2);
+//const ambientLight2 = new THREE.AmbientLight(0x0000ff, 1);
+//scene.add(ambientLight2);
 // const ambientLight2 = new THREE.AmbientLight(0xAAAAFFF, 0.5);
 // scene.add(ambientLight2);
 
@@ -1229,10 +1235,9 @@ function animate() {
         ];
 
         let balloonType = Balloon.TYPES.red;
-        if ((balloonIndex % 5) == 1) balloonType = Balloon.TYPES.blue;
-        else if ((balloonIndex % 5) == 2) balloonType = Balloon.TYPES.green;
-        else if ((balloonIndex % 5) == 3) balloonType = Balloon.TYPES.yellow;
-        else if ((balloonIndex % 5) == 4) balloonType = Balloon.TYPES.pink;
+        if ((balloonIndex % 3) == 0) balloonType = Balloon.TYPES.red;
+        else if ((balloonIndex % 3) == 1) balloonType = Balloon.TYPES.green;
+        else if ((balloonIndex % 3) == 2) balloonType = Balloon.TYPES.blue;
 
         balloons.push(
             new Balloon({ type: balloonType, waypoints }, scene)
