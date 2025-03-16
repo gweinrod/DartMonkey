@@ -381,7 +381,7 @@ createBalloonMaterial(materialProperties) {
             float brightness = ((1.0 / 1.0) * color.x + (1.0 / 1.0) * color.y + (1.0 / 1.0) * color.z); //TODO adjust for dynamic balloon colors
 
             float dark = 0.20;
-            float darker = 0.70;
+            float darker = 0.40;
             float light = 0.001;
 
 
@@ -418,8 +418,8 @@ createBalloonMaterial(materialProperties) {
 
     // Prepare uniforms
     const uniforms = {
-        ambient: { value: 0.1 },
-        diffusivity: { value: 0.40 },
+        ambient: { value: 0.15 },
+        diffusivity: { value: 0.50 },
         specularity: { value: 1.00 },
         smoothness: { value: materialProperties.smoothness },
         shape_color: { value: shape_color },
