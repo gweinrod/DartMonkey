@@ -1,7 +1,7 @@
 import * as THREE from "three";
-import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import Dart from "./dart";
 import Balloon from "./balloon";
 
@@ -16,7 +16,7 @@ const TREE_A_MTL = "/models/LowPoly_TREE_A.mtl";
 //constants
 const WORLDSIZE = 100;
 const SKYBLUE = 0x8bdafc;
-const PLAYER_HEIGHT = 5;
+const PLAYER_HEIGHT = 3;
 const BALLOON_MIN_Y = 6;
 const FLOOR_Y = 0;
 const FOV = 60;
@@ -26,15 +26,12 @@ const FAR = WORLDSIZE * 2;
 const FIRE_RATE = 6; //darts per second
 const DART_SIZE = 3;
 const LERP_TOL = 2; //divided by 10 units allowed overlap between balloons
-const WIND_INTERVAL = 2; //10 seconds
-const WAY_TIMER = 0.25;
 
 //scene and camera
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(FOV, ASPECT, NEAR, FAR);
 
 //Object loader
-const textureLoader = new THREE.TextureLoader();
 const matLoader = new MTLLoader();
 const objLoader = new OBJLoader();
 const glbLoader = new GLTFLoader();
@@ -59,7 +56,6 @@ let moves = {
 
 const playerProperties = {
     velocity: new THREE.Vector3(0, 0, 0),
-    position: new THREE.Vector3(0, 0, 0),
     ACCELERATION: 5,
     MAX_XZ_SPEED: 20,
     FRICTION: 0.10,
@@ -74,9 +70,9 @@ const JUMP_STRENGTH = 36;
 const objectBoundingBoxes = [];
 const playerBoundingBox = new THREE.Box3();
 let boundingSpheres = [];
-const playerSize = new THREE.Vector3(1.5, PLAYER_HEIGHT * 0.5, 1.5);
-// const boxHelper = new THREE.Box3Helper(playerBoundingBox, 0x00ff00); // Green outline
-// scene.add(boxHelper);
+const playerSize = new THREE.Vector3(1.5, PLAYER_HEIGHT*0.5, 1.5);
+//const boxHelper = new THREE.Box3Helper(playerBoundingBox, 0x00ff00); // Green outline
+//scene.add(boxHelper);
 
 //score
 let score = 0;
@@ -90,41 +86,19 @@ let score = 0;
 /* Geometries */
 
 //grass
+let grassMaterial = new THREE.MeshPhongMaterial({
+    color: 0x326732,
+    shininess: 0.75,
+    specular: new THREE.Color(0x165516),
+    reflectivity: 1.0
+});
 
 //floor
 let floor = null; //check null before animating
-
 objLoader.load(FLOOR_OBJ, (level) => {
     floor = level;
-    // floor.children[0].material = grassMaterial;
-    const grassTexture = textureLoader.load("./images/grass_2.png");
-    grassTexture.wrapS = THREE.RepeatWrapping;
-    grassTexture.wrapT = THREE.RepeatWrapping;
-    grassTexture.repeat.set(75, 75);
-
-    textureLoader.load(
-        "./images/grass_displacement_2.png",
-        (grassDisplacementMap) => {
-            grassDisplacementMap.wrapS = THREE.RepeatWrapping;
-            grassDisplacementMap.wrapT = THREE.RepeatWrapping;
-            grassDisplacementMap.repeat.set(100, 100);
-            console.log(grassDisplacementMap);
-            const grassMaterial = new THREE.MeshStandardMaterial({
-                // color: 0x81c784,
-                // color: 0xeeeeeeee,
-                displacementMap: grassDisplacementMap,
-                map: grassTexture,
-                displacementScale: 0.8,
-                displacementBias: -0.25,
-
-                roughness: 0.7,
-            });
-            const geometry = new THREE.PlaneGeometry(200, 200, 2000, 2000);
-            floor.children[0] = new THREE.Mesh(geometry, grassMaterial);
-            floor.children[0].rotateX(-Math.PI / 2);
-            scene.add(floor);
-        }
-    );
+    floor.children[0].material = grassMaterial;
+    scene.add(floor);
 });
 
 //environment
@@ -150,7 +124,9 @@ const FLOWERS = FLOWERS_MIN + Math.random()*(FLOWERS_MAX - FLOWERS_MIN);
 
 
 //todo refactor model clones
-function glb(n) {}
+function glb(n){
+
+}
 
 //large trees
 glbLoader.load(
@@ -163,13 +139,13 @@ glbLoader.load(
             let tree = model.clone();
 
             //scale
-            let s = 1 + 2 * Math.random(); //1-3x
+            let s = 1 + 2*Math.random(); //1-3x
             tree.scale.set(s, s, s); //proportional
-            tree.rotateY(Math.random() * Math.PI);
+            tree.rotateY(Math.random()*Math.PI)
 
             //position
-            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
-            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -180,14 +156,14 @@ glbLoader.load(
             box.expandByScalar(-15);
             box.min.y = 0;
             box.max.y = 25;
-            box.min.x = tree.position.x - 2;
-            box.max.x = tree.position.x + 2;
-            box.min.z = tree.position.z - 2;
-            box.max.z = tree.position.z + 2;
-            objectBoundingBoxes.push(box);
+            box.min.x = tree.position.x-2;
+            box.max.x = tree.position.x+2;
+            box.min.z = tree.position.z-2;
+            box.max.z = tree.position.z+2;
+            objectBoundingBoxes.push(box); 
 
-            const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
-            scene.add(boxHelper);
+            // const boxHelper = new THREE.Box3Helper(box, 0xff0000); // red outline
+            // scene.add(boxHelper);
         }
     },
     undefined,
@@ -203,18 +179,18 @@ glbLoader.load(
         const model = glb.scene;
 
         // Create trees from the model after the model is loaded
-        for (let i = 0; i < TREES * 2; i++) {
+        for (let i = 0; i < TREES*2; i++) {
             let tree = model.clone();
 
             //scale
-            let s = 1 + 2 * Math.random(); //1-3x
+            let s = 1 + 2*Math.random(); //1-3x
             tree.scale.set(s, s, s); //proportional
-            tree.rotateY(Math.random() * Math.PI);
+            tree.rotateY(Math.random()*Math.PI)
 
             //TODO wrap while (tree does not intersect skysphere)
             //position
-            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
-            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -222,10 +198,10 @@ glbLoader.load(
             let box = new THREE.Box3().setFromObject(tree);
             box.expandByScalar(-2);
             box.min.y = 0;
-            box.min.x = tree.position.x - 1;
-            box.max.x = tree.position.x + 1;
-            box.min.z = tree.position.z - 1;
-            box.max.z = tree.position.z + 1;
+            box.min.x = tree.position.x-1;
+            box.max.x = tree.position.x+1;
+            box.min.z = tree.position.z-1;
+            box.max.z = tree.position.z+1;
             objectBoundingBoxes.push(box);
 
             // const boxHelper = new THREE.Box3Helper(box, 0x0000ff); // blue outline
@@ -245,18 +221,18 @@ glbLoader.load(
         const model = glb.scene;
 
         // Create trees from the model after the model is loaded
-        for (let i = 0; i < TREES / 3; i++) {
+        for (let i = 0; i < TREES/3; i++) {
             let tree = model.clone();
 
             //scale
-            let s = 1 + 2 * Math.random(); //1-3x
+            let s = 1 + 2*Math.random(); //1-3x
             tree.scale.set(s, s, s); //proportional
-            tree.rotateY(Math.random() * Math.PI);
+            tree.rotateY(Math.random()*Math.PI)
 
             //TODO wrap while (tree does not intersect skysphere)
             //position
-            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
-            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -282,18 +258,18 @@ glbLoader.load(
         const model = glb.scene;
 
         // Create trees from the model after the model is loaded
-        for (let i = 0; i < TREES / 2; i++) {
+        for (let i = 0; i < TREES/2; i++) {
             let tree = model.clone();
 
             //scale
             let s = 1 + Math.random(); //1-2x
             tree.scale.set(s, s, s); //proportional
-            tree.rotateY(Math.random() * Math.PI);
+            tree.rotateY(Math.random()*Math.PI)
 
             //TODO wrap while (tree does not intersect skysphere)
             //position
-            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
-            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -326,12 +302,12 @@ glbLoader.load(
             //scalew
             let s = 1 + Math.random(); //1-2x
             tree.scale.set(s, s, s); //proportional
-            tree.rotateY(Math.random() * Math.PI);
+            tree.rotateY(Math.random()*Math.PI)
 
             //TODO wrap while (tree does not intersect skysphere)
             //position
-            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
-            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -356,12 +332,12 @@ glbLoader.load(
             //scale
             let s = 1 + Math.random(); //1-2x
             tree.scale.set(s, s, s); //proportional
-            tree.rotateY(Math.random() * Math.PI);
+            tree.rotateY(Math.random()*Math.PI)
 
             //TODO wrap while (tree does not intersect skysphere)
             //position
-            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
-            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let px = 2*WORLDSIZE*Math.random() - WORLDSIZE;
+            let pz = 2*WORLDSIZE*Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -375,6 +351,7 @@ glbLoader.load(
 
 
 //sky
+const textureLoader = new THREE.TextureLoader();
 const skyTexture = textureLoader.load('./images/sky.jpeg');
 
 let skyGeometry = new THREE.SphereGeometry(WORLDSIZE, 32, 32);
@@ -443,7 +420,7 @@ sunLight.position.clone(sun.position);
 sun.attach(sunLight);
 scene.add(sunLight);
 
-sunLight.power = Math.pow(2,18);
+sunLight.power = 5000;
 
 const ambientLight = new THREE.AmbientLight(0x000050, 2);
 scene.add(ambientLight);
@@ -545,7 +522,7 @@ const getYawFromQuaternion = (q) => {
     return euler.y;
 };
 
-const updatePlayerMovement = (balloons, delta) => {
+const updatePlayerMovement = (balloons) => {
     const inputDirection = new THREE.Vector3();
 
     const forward = new THREE.Vector3(0, 0, -1);
@@ -581,9 +558,9 @@ const updatePlayerMovement = (balloons, delta) => {
 
     let playerYVelocity = playerProperties.velocity.y;
 
-    // if (isJumping > 0) {
-    playerYVelocity += GRAVITY * delta;
-    // }
+    if (isJumping > 0) {
+        playerYVelocity += GRAVITY * delta;
+    }
 
     // Update velocity
     playerProperties.velocity.set(
@@ -597,148 +574,35 @@ const updatePlayerMovement = (balloons, delta) => {
     const sphereRadius = WORLDSIZE - 5; // Define world boundary with a small buffer
 
     // Keep player on ground level
-    // camera.position.y = Math.max(0, Math.min(WORLDSIZE - 5, camera.position.y)); // Clamp Y
+    camera.position.y = Math.max(0, Math.min(WORLDSIZE - 5, camera.position.y)); // Clamp Y
 
-    const cameraVelocity = playerProperties.velocity.clone();
-    cameraVelocity.multiplyScalar(delta);
+    // Compute 2D position on the X-Z plane
+    const playerXZ = new THREE.Vector2(camera.position.x, camera.position.z);
+    const distanceFromCenter = playerXZ.length();
 
-    let newCameraPosition = camera.position.clone();
-    newCameraPosition.add(cameraVelocity);
+    if (distanceFromCenter > sphereRadius) {
+        // Clamp movement within the circular boundary
+        playerXZ.normalize().multiplyScalar(sphereRadius);
+        camera.position.x = playerXZ.x;
+        camera.position.z = playerXZ.y;
+    }
 
-    playerBoundingBox.setFromCenterAndSize(newCameraPosition, playerSize);
-    playerBoundingBox.expandByScalar(-0.5);
+    playerBoundingBox.setFromCenterAndSize(camera.position, playerSize);
+    playerBoundingBox.expandByScalar(-0.5); 
 
     let treeLogCollisionDetected = false;
     let balloonCollisionDetected = true;
     let collidedBalloon = null;
 
-    const velocityLine = new THREE.Line3(camera.position, newCameraPosition);
-
     for (const objectBox of objectBoundingBoxes) {
-        objectBox.min.y -= playerSize.y;
-        objectBox.max.y += playerSize.y;
         if (playerBoundingBox.intersectsBox(objectBox)) {
             //console.log("tree/log collision");
             treeLogCollisionDetected = true;
-
-            const getBoxPlanes = (box) => {
-                const planes = [];
-
-                const min = box.min;
-                const max = box.max;
-
-                const playerMin = playerBoundingBox.min;
-                const playerMax = playerBoundingBox.max;
-
-                planes.push({
-                    boxPlane: new THREE.Plane(
-                        new THREE.Vector3(-1, 0, 0),
-                        min.x
-                    ),
-                    playerPlane: new THREE.Plane(
-                        new THREE.Vector3(1, 0, 0),
-                        -playerMax.x
-                    ),
-                }); // Left
-                planes.push({
-                    boxPlane: new THREE.Plane(
-                        new THREE.Vector3(1, 0, 0),
-                        -max.x
-                    ),
-                    playerPlane: new THREE.Plane(
-                        new THREE.Vector3(-1, 0, 0),
-                        playerMin.x
-                    ),
-                }); // Right
-                planes.push({
-                    boxPlane: new THREE.Plane(
-                        new THREE.Vector3(0, -1, 0),
-                        min.y
-                    ),
-                    playerPlane: new THREE.Plane(
-                        new THREE.Vector3(0, 1, 0),
-                        -playerMax.y
-                    ),
-                }); // Bottom
-                planes.push({
-                    boxPlane: new THREE.Plane(
-                        new THREE.Vector3(0, 1, 0),
-                        -max.y
-                    ),
-                    playerPlane: new THREE.Plane(
-                        new THREE.Vector3(0, -1, 0),
-                        playerMin.y
-                    ),
-                }); // Top
-                planes.push({
-                    boxPlane: new THREE.Plane(
-                        new THREE.Vector3(0, 0, -1),
-                        min.z
-                    ),
-                    playerPlane: new THREE.Plane(
-                        new THREE.Vector3(0, 0, 1),
-                        -playerMax.z
-                    ),
-                }); // Front
-                planes.push({
-                    boxPlane: new THREE.Plane(
-                        new THREE.Vector3(0, 0, 1),
-                        -max.z
-                    ),
-                    playerPlane: new THREE.Plane(
-                        new THREE.Vector3(0, 0, -1),
-                        playerMin.z
-                    ),
-                }); // Back
-
-                return planes;
-            };
-
-            const boxPlanes = getBoxPlanes(objectBox);
-
-            for (const { boxPlane } of boxPlanes) {
-                const horizontal = boxPlane.normal.y === 0;
-                if (
-                    boxPlane.intersectsLine(velocityLine) &&
-                    (horizontal || boxPlane.normal.dot(cameraVelocity) <= 0)
-                ) {
-                    const projectedPoint = new THREE.Vector3();
-                    boxPlane.projectPoint(newCameraPosition, projectedPoint);
-
-                    // const debugSphere = new THREE.Mesh(
-                    //     new THREE.SphereGeometry(0.1),
-                    //     new THREE.MeshBasicMaterial({ color: 0xff0000 })
-                    // );
-                    // debugSphere.position.copy(projectedPoint);
-
-                    // const boxCenterboxPlane = new THREE.boxPlane();
-                    // const boxCenter = new THREE.Vector3();
-                    // objectBox.getCenter(boxCenter);
-                    // boxCenterboxPlane.setFromNormalAndCoplanarPoint(
-                    //     boxPlane.normal,
-                    //     boxCenter
-                    // );
-                    // const distance = boxCenterboxPlane.distanceToPoint(
-                    //     projectedPoint
-                    // );
-
-                    projectedPoint.addScaledVector(boxPlane.normal, 0.01);
-
-                    if (!horizontal) {
-                        playerProperties.velocity.y = 0;
-                        isJumping = 0;
-                    }
-
-                    newCameraPosition.copy(projectedPoint);
-                }
-            }
+            break;
         }
-
-        objectBox.min.y += playerSize.y;
-        objectBox.max.y -= playerSize.y;
     }
 
-    boundingSpheres.forEach((sphere) => {
+    boundingSpheres.forEach(sphere => {
         scene.remove(sphere);
     });
     boundingSpheres = [];
@@ -746,7 +610,7 @@ const updatePlayerMovement = (balloons, delta) => {
     let collidedBalloonPos = new THREE.Vector3();
 
     //remove previous bounding spheres
-    boundingSpheres.forEach((sphere) => scene.remove(sphere));
+    boundingSpheres.forEach(sphere => scene.remove(sphere));
     boundingSpheres = [];
 
     //handle balloon collisions
@@ -756,7 +620,7 @@ const updatePlayerMovement = (balloons, delta) => {
         balloon.getWorldPosition(balloonPos);
 
         let balloonBox = new THREE.Box3().setFromCenterAndSize(
-            balloonPos,
+            balloonPos, 
             new THREE.Vector3(
                 balloon.geometry.boundingSphere.radius * 2,
                 balloon.geometry.boundingSphere.radius * 2,
@@ -768,14 +632,14 @@ const updatePlayerMovement = (balloons, delta) => {
             //console.log("Balloon-player collision");
 
             let bounceDirection = new THREE.Vector3(
-                playerProperties.velocity.x,
-                Math.abs(playerProperties.velocity.y) + 0.5, //slight upward motion
+                playerProperties.velocity.x, 
+                Math.abs(playerProperties.velocity.y)+0.5, //slight upward motion
                 playerProperties.velocity.z
             );
 
             if (bounceDirection.lengthSq() > 0) {
                 bounceDirection.normalize();
-                balloon.position.addScaledVector(bounceDirection, 0.5);
+                balloon.position.addScaledVector(bounceDirection, 0.5); 
             }
 
             updateScore(-5);
@@ -783,27 +647,6 @@ const updatePlayerMovement = (balloons, delta) => {
             break;
         }
 
-        if (newCameraPosition.y < playerSize.y) {
-            newCameraPosition.y = playerSize.y;
-            playerProperties.velocity.y = 0;
-            isJumping = 0;
-        }
-
-        // Compute 2D position on the X-Z plane
-        const playerXZ = new THREE.Vector2(
-            newCameraPosition.x,
-            newCameraPosition.z
-        );
-        const distanceFromCenter = playerXZ.length();
-
-        if (distanceFromCenter > sphereRadius) {
-            // Clamp movement within the circular boundary
-            playerXZ.normalize().multiplyScalar(sphereRadius);
-            newCameraPosition.x = playerXZ.x;
-            newCameraPosition.z = playerXZ.y;
-        }
-
-        camera.position.copy(newCameraPosition);
         // //debug bounding spheres
         // let sphereGeometry = new THREE.SphereGeometry(balloon.geometry.boundingSphere.radius * 2, 16, 16);
         // let sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
@@ -814,26 +657,18 @@ const updatePlayerMovement = (balloons, delta) => {
         // boundingSpheres.push(boundingSphereMesh);
     }
 
-    // if (treeLogCollisionDetected) {
-    //     camera.position.add(cameraVelocity);
 
-    //     let movementDirection = new THREE.Vector3(
-    //         playerProperties.velocity.x,
-    //         0,
-    //         playerProperties.velocity.z
-    //     );
-
-    //     if (movementDirection.lengthSq() > 0) {
-    //         movementDirection.normalize();
-    //         camera.position.addScaledVector(movementDirection, -0.05);
-    //     }
-
-    //     playerProperties.velocity.set(
-    //         -100 * movementDirection.x,
-    //         0,
-    //         -100 * movementDirection.z
-    //     );
-    // }
+    if (treeLogCollisionDetected) {
+        let movementDirection = new THREE.Vector3(playerProperties.velocity.x, 0, playerProperties.velocity.z);
+    
+        if (movementDirection.lengthSq() > 0) {
+            movementDirection.normalize();
+            camera.position.addScaledVector(movementDirection, -0.05);
+        }
+    
+        playerProperties.velocity.set(-100*movementDirection.x, 0, -100*movementDirection.z);
+    }
+    
 };
 
 //remove out of bounds darts
@@ -898,8 +733,7 @@ function checkCollisions(darts, balloons) {
             //delete balloon
             if (balloonVicinity.containsPoint(dartPos)) {
                 //console.log("collision detected: dart %d hit Balloon %d", i, j);
-                if (balloons[j].pop(scene, darts[i].id)) {
-                    console.log(darts[i].id);
+                if (balloons[j].pop(scene)) {
                     scene.remove(balloon);
                     balloons.splice(j, 1);
                 }
@@ -915,7 +749,6 @@ function checkCollisions(darts, balloons) {
         }
     }
 }
-
 
 function bounceBalloons(balloons) {
 
@@ -958,15 +791,10 @@ function bounceBalloons(balloons) {
                 //lerp if inside one another
                 let tolerance = LERP_TOL / 5;
                 if ((bounce - distance) > tolerance) { 
-
-                    console.log(`Lerping balloons out of one another`);
-
                     balloons[i].lerping = true;
                     balloons[j].lerping = true;
                     distance += (tolerance / 10);
-                    balloons[i].lerpfactor = 0.5;
-                    balloons[j].lerpfactor = 0.5;
-                    balloons[i].lerp.copy(balloonPos).addScaledVector(normal, -(bounce - distance) / 2);
+                    balloons[i].lerp.copy(balloonPos).addScaledVector(normal, (distance - bounce) / 2); //set lerp location
                     balloons[j].lerp.copy(otherPos).addScaledVector(normal, (bounce - distance) / 2);
                     balloons[i].lerp.y = Math.max(balloons[i].radius*1.3, balloons[i].lerp.y);
                     balloons[j].lerp.y = Math.max(balloons[j].radius*1.3, balloons[j].lerp.y);
@@ -985,11 +813,15 @@ function bounceBalloons(balloons) {
                     other_n.multiplyScalar(other_n.dot(balloons[j].direction));
 
                     //edge case traveling in the exact same direction
+                    //CHANGE to if the difference between the directions length is <....
                     if ((balloon_n.x == 0) && (balloon_n.y == 0) && (balloon_n.z == 0)) {
 
                         //jitter directions
                         //console.log(`Edge case, exactly equal directions, jittering directions...\n`);
-                        let delta = getJitter(5.0, 5.0, 5.0);
+                        let dx = (Math.random() - 0.5) * 5.0; 
+                        let dy = (Math.random() - 0.5) * 5.0; 
+                        let dz = (Math.random() - 0.5) * 5.0;
+                        let delta = new THREE.Vector3(dx, dy, dz).normalize();
                         //console.log(`Adding the direction vector <${delta.x},${delta.y},${delta.z}>\n`)
                         //console.log(`To the direction of the balloon <${balloons[i].direction.x},${balloons[i].direction.y},${balloons[i].direction.z}>\n`)
                         balloons[i].direction.addVectors(balloons[i].direction, delta);
@@ -1135,23 +967,16 @@ let balloonTimer = 0;
 let balloonIndex = 0;
 const balloonSpawnInterval = 1;
 function animate() {
-
-    // Set clock, times
     requestAnimationFrame(animate);
     time = clock.getElapsedTime();
     delta = time - last;
     last = time;
 
-    // TODO: trig f'n modulate sky color based on elapsed\
-
-    // Increment animation timers
+    // TODO: trig f'n modulate sky color based on elapsed
     balloonTimer += delta;
     dartTimer += delta;
-
-    // Spawn balloons
     if (balloonTimer >= balloonSpawnInterval) {
         const waypoints = [
-            new THREE.Vector3(93.9, BALLOON_MIN_Y, -34),
             new THREE.Vector3(0, BALLOON_MIN_Y, -17),
             new THREE.Vector3(2.5, BALLOON_MIN_Y, 14),
             new THREE.Vector3(1.5, BALLOON_MIN_Y, 47),
@@ -1181,8 +1006,6 @@ function animate() {
             scene.remove(balloons[i].balloon);
             balloons.splice(i, 1);
         }
-
-    
     }
 
     // Loop Darts
@@ -1193,13 +1016,9 @@ function animate() {
         }
     }
 
-    //disable controls
-    // TODO: Animate Character
-    // TODO: Move Camera
+    updatePlayerMovement(balloons);
 
-    updatePlayerMovement(balloons, delta);
-
-    // Engage automatic fire on long mouse hold
+    //engage automatic fire on long mouse hold
     if (firing && !automatic) {
         felta += delta;
         if (felta >= 0.5) {
@@ -1208,7 +1027,7 @@ function animate() {
         }
     }
 
-    // Automatic shots
+    //automatic fire
     if (automatic && dartTimer >= 1 / FIRE_RATE) {
         let direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
@@ -1220,16 +1039,15 @@ function animate() {
 
     bounceBalloons(balloons);
 
+    const cameraVelocity = playerProperties.velocity.clone();
+    cameraVelocity.multiplyScalar(delta);
+    camera.position.add(cameraVelocity);
 
-    // const cameraVelocity = playerProperties.velocity.clone();
-    // cameraVelocity.multiplyScalar(delta);
-    // camera.position.add(cameraVelocity);
-
-    // if (camera.position.y <= PLAYER_HEIGHT) {
-    //     camera.position.y = PLAYER_HEIGHT;
-    //     playerProperties.velocity.y = 0;
-    //     isJumping = false;
-    // }
+    if (camera.position.y <= PLAYER_HEIGHT) {
+        camera.position.y = PLAYER_HEIGHT;
+        playerProperties.velocity.y = 0;
+        isJumping = false;
+    }
 
     cursorSprite.position.copy(camera.position);
     const cameraDirection = new THREE.Vector3();
