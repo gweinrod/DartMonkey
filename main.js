@@ -117,7 +117,7 @@ objLoader.load(FLOOR_OBJ, (level) => {
                 displacementScale: 0.8,
                 displacementBias: -0.25,
 
-                roughness: 0.4,
+                roughness: 0.7,
             });
             const geometry = new THREE.PlaneGeometry(200, 200, 2000, 2000);
             floor.children[0] = new THREE.Mesh(geometry, grassMaterial);
@@ -153,18 +153,6 @@ const FLOWERS = FLOWERS_MIN + Math.random()*(FLOWERS_MAX - FLOWERS_MIN);
 //todo refactor model clones
 function glb(n) {}
 
-const getRandomPositionWithinBounds = () => {
-    let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
-    let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
-
-    const pos = new THREE.Vector2(px, pz);
-    if (pos.length() > WORLDSIZE * 0.7) {
-        return getRandomPositionWithinBounds();
-    }
-
-    return { x: px, z: pz };
-};
-
 //large trees
 glbLoader.load(
     "models/LowPoly_TREE_A.glb",
@@ -181,7 +169,8 @@ glbLoader.load(
             tree.rotateY(Math.random() * Math.PI);
 
             //position
-            const { x: px, z: pz } = getRandomPositionWithinBounds();
+            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -226,8 +215,8 @@ glbLoader.load(
 
             //TODO wrap while (tree does not intersect skysphere)
             //position
-            
-            const { x: px, z: pz } = getRandomPositionWithinBounds();
+            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -239,7 +228,6 @@ glbLoader.load(
             box.max.x = tree.position.x + 1;
             box.min.z = tree.position.z - 1;
             box.max.z = tree.position.z + 1;
-            box.expandByScalar(s);
             objectBoundingBoxes.push(box);
 
             // const boxHelper = new THREE.Box3Helper(box, 0x0000ff); // blue outline
@@ -251,7 +239,6 @@ glbLoader.load(
         console.error("Error loading model:", error);
     }
 );
-
 
 //dead trees
 glbLoader.load(
@@ -270,8 +257,8 @@ glbLoader.load(
 
             //TODO wrap while (tree does not intersect skysphere)
             //position
-            
-            const { x: px, z: pz } = getRandomPositionWithinBounds();
+            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -307,8 +294,8 @@ glbLoader.load(
 
             //TODO wrap while (tree does not intersect skysphere)
             //position
-           
-            const { x: px, z: pz } = getRandomPositionWithinBounds();
+            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -345,8 +332,8 @@ glbLoader.load(
 
             //TODO wrap while (tree does not intersect skysphere)
             //position
-            
-            const { x: px, z: pz } = getRandomPositionWithinBounds();
+            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -375,8 +362,8 @@ glbLoader.load(
 
             //TODO wrap while (tree does not intersect skysphere)
             //position
-            
-            const { x: px, z: pz } = getRandomPositionWithinBounds();
+            let px = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
+            let pz = 2 * WORLDSIZE * Math.random() - WORLDSIZE;
             tree.position.set(px, 0, pz);
 
             scene.add(tree);
@@ -458,7 +445,7 @@ sunLight.position.clone(sun.position);
 sun.add(sunLight);
 // scene.add(sunLight);
 
-sunLight.power = Math.pow(2,18);
+sunLight.power = 500000;
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
@@ -720,6 +707,22 @@ const updatePlayerMovement = (balloons, delta) => {
                     const projectedPoint = new THREE.Vector3();
                     boxPlane.projectPoint(newCameraPosition, projectedPoint);
 
+                    // const debugSphere = new THREE.Mesh(
+                    //     new THREE.SphereGeometry(0.1),
+                    //     new THREE.MeshBasicMaterial({ color: 0xff0000 })
+                    // );
+                    // debugSphere.position.copy(projectedPoint);
+
+                    // const boxCenterboxPlane = new THREE.boxPlane();
+                    // const boxCenter = new THREE.Vector3();
+                    // objectBox.getCenter(boxCenter);
+                    // boxCenterboxPlane.setFromNormalAndCoplanarPoint(
+                    //     boxPlane.normal,
+                    //     boxCenter
+                    // );
+                    // const distance = boxCenterboxPlane.distanceToPoint(
+                    //     projectedPoint
+                    // );
 
                     projectedPoint.addScaledVector(boxPlane.normal, 0.01);
 
