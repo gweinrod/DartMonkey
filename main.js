@@ -443,7 +443,7 @@ sunLight.position.clone(sun.position);
 sun.attach(sunLight);
 scene.add(sunLight);
 
-sunLight.power = 5000;
+sunLight.power = Math.pow(2,18);
 
 const ambientLight = new THREE.AmbientLight(0x000050, 2);
 scene.add(ambientLight);
@@ -917,66 +917,6 @@ function checkCollisions(darts, balloons) {
 }
 
 
-// Jitter a direction using independent scale factors
-function getJitter(sx, sy, sz) {
-    let dx = (Math.random() - 0.5) * sx; 
-    let dy = (Math.random() - 0.5) * sy; 
-    let dz = (Math.random() - 0.5) * sz;
-    let delta = new THREE.Vector3(dx, dy, dz).normalize();
-    return delta;
-}
-
-// Create a sphere of wind
-function callWind(balloons, radius, min, max) {
-
-    let windGeometry = new THREE.BufferGeometry();
-    let windMaterial = new THREE.PointsMaterial({size:1, opacity: 0});
-    let wind = new THREE.Mesh(windGeometry, windMaterial);
-
-    //randomize location
-    let px = (Math.random() - 0.5) * WORLDSIZE;
-    let py = (Math.random() / 2) * WORLDSIZE;
-    let pz = (Math.random() - 0.5) * WORLDSIZE;
-    wind.position.set(px, py, pz);
-
-    //randomize direction of wind
-    px = 2 * Math.random() - 1.0;
-    py = 2 * Math.random() - 1.0;
-    pz = 2 * Math.random() - 1.0;
-    let direction = new THREE.Vector3(px, py, pz);
-    direction.normalize();
-
-    //randomize magnitude
-    let magnitude = (max - min)*Math.random() + min;
-    console.log(`Magnitude of the wind randomized to ${magnitude}\n`);
-    
-    //loop balloons
-    for (let i = balloons.length - 2; i >= 0; i--) {
-        let balloon = balloons[i].balloon;  
-        if (balloon == null) continue;  //removed
-
-        let balloonPos = new THREE.Vector3();
-        balloon.getWorldPosition(balloonPos);
-        let distance = balloonPos.distanceTo(wind.position);
-
-        //check bounds, add jittered wind
-        if (distance <= radius) {
-            let jm = magnitude * (0.50); //+- 50%
-            let delta = getJitter(jm, jm, jm);
-
-            //TODO : in balloon animate, tilt while lerping from wind
-
-            //lerp to location
-            direction.addVectors(direction, delta);
-            balloons[i].lerping = true;
-            balloons[i].lerpfactor = 0.1;
-            balloons[i].lerp.copy(balloonPos).add(direction);
-            balloons[i].lerp.y = Math.max(balloons[i].radius*1.3, balloons[i].lerp.y);
-        }
-
-    }
-}
-
 function bounceBalloons(balloons) {
 
     //loop through all balloons...
@@ -1191,8 +1131,6 @@ function updateScore(score_amt) {
 
 /* Animate */
 
-let wayTimer = 0;
-let windTimer = 0;
 let balloonTimer = 0;
 let balloonIndex = 0;
 const balloonSpawnInterval = 1;
@@ -1207,10 +1145,8 @@ function animate() {
     // TODO: trig f'n modulate sky color based on elapsed\
 
     // Increment animation timers
-    windTimer += delta;
     balloonTimer += delta;
     dartTimer += delta;
-    wayTimer += delta;
 
     // Spawn balloons
     if (balloonTimer >= balloonSpawnInterval) {
@@ -1246,22 +1182,7 @@ function animate() {
             balloons.splice(i, 1);
         }
 
-        if (!balloons[i].lerping) {
-            if (wayTimer >  WAY_TIMER ) {
-
-                const waypoint = balloons[i].waypoints[balloons[i].waypointIndex];
-                const nextWaypoint = balloons[i].waypoints[balloons[i].waypointIndex + 1];
-                let direction = new THREE.Vector3();
-                
-                if (waypoint && nextWaypoint) { direction.subVectors(nextWaypoint, waypoint) };
-                direction.normalize();
-                balloons[i].direction = direction;
-                balloons[i].lerping = false;
-                wayTimer = 0.0;
-            }
-            balloons[i].position.y += Math.sin(time + balloons[i].randomOffset) * 0.01;
-        }
-
+    
     }
 
     // Loop Darts
@@ -1300,14 +1221,9 @@ function animate() {
     bounceBalloons(balloons);
 
 
-    if (windTimer >= WIND_INTERVAL) {
-        callWind(balloons, Math.random() * WORLDSIZE, 1, 20);  //radius 32, magnitude 1-20
-        windTimer = 0;
-    }
-
-    const cameraVelocity = playerProperties.velocity.clone();
-    cameraVelocity.multiplyScalar(delta);
-    camera.position.add(cameraVelocity);
+    // const cameraVelocity = playerProperties.velocity.clone();
+    // cameraVelocity.multiplyScalar(delta);
+    // camera.position.add(cameraVelocity);
 
     // if (camera.position.y <= PLAYER_HEIGHT) {
     //     camera.position.y = PLAYER_HEIGHT;
