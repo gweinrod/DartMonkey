@@ -959,6 +959,7 @@ function callWind(balloons, radius, min, max) {
     //randomize magnitude
     let magnitude = (max - min)*Math.random() + min;
     console.log(`Magnitude of the wind randomized to ${magnitude}\n`);
+
     
     //loop balloons
     for (let i = balloons.length - 2; i >= 0; i--) {
@@ -971,7 +972,7 @@ function callWind(balloons, radius, min, max) {
 
         //check bounds, add jittered wind
         if (distance <= radius) {
-            let jm = magnitude * (0.50); //+- 50%
+            let jm = magnitude * 2.0; //+- 50%
             let delta = getJitter(jm, jm, jm);
 
             //lerp to location
