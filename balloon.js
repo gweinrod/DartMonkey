@@ -111,6 +111,7 @@ export default class Balloon {
             diffusivity: 0.25, 
             specularity: 1.0, 
             smoothness: 100.0 
+
         });
     
         this.balloon = new THREE.Mesh(
@@ -522,16 +523,23 @@ updateBalloonMaterialUniforms(scene, camera) {
         }
     }
 }
-
     animate(time, delta) {
         if (!this.lerping) {
             this.setDirection();
-            this.balloon.position.y += Math.sin(time + this.randomOffset) * 0.01;
-            this.balloon.position.addScaledVector(this.direction, this.speed * delta);
+            this.balloon.position.y +=
+                Math.sin(time + this.randomOffset) * 0.01;
+            this.balloon.position.addScaledVector(
+                this.direction,
+                this.speed * delta
+            );
+        } else if (this.balloon.position == this.lerp) {
+            //console.log(`Reached lerp position`);
+            this.lerping = false;
         } else {
             this.balloon.position.lerp(this.lerp, this.lerpfactor);
             if (this.balloon.position.distanceTo(this.lerp) < 0.1 ) {
                 this.lerping = false
+
             }
         }
     }

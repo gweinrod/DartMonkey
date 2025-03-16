@@ -926,7 +926,6 @@ function checkCollisions(darts, balloons) {
     }
 }
 
-
 // Jitter a direction using independent scale factors
 function getJitter(sx, sy, sz) {
     let dx = (Math.random() - 0.5) * sx; 
@@ -1026,15 +1025,10 @@ function bounceBalloons(balloons) {
                 //lerp if inside one another
                 let tolerance = LERP_TOL / 5;
                 if ((bounce - distance) > tolerance) { 
-
-                    console.log(`Lerping balloons out of one another`);
-
                     balloons[i].lerping = true;
                     balloons[j].lerping = true;
                     distance += (tolerance / 10);
-                    balloons[i].lerpfactor = 0.5;
-                    balloons[j].lerpfactor = 0.5;
-                    balloons[i].lerp.copy(balloonPos).addScaledVector(normal, -(bounce - distance) / 2);
+                    balloons[i].lerp.copy(balloonPos).addScaledVector(normal, (distance - bounce) / 2); //set lerp location
                     balloons[j].lerp.copy(otherPos).addScaledVector(normal, (bounce - distance) / 2);
                     balloons[i].lerp.y = Math.max(balloons[i].radius*1.3, balloons[i].lerp.y);
                     balloons[j].lerp.y = Math.max(balloons[j].radius*1.3, balloons[j].lerp.y);
@@ -1055,11 +1049,15 @@ function bounceBalloons(balloons) {
                     other_n.multiplyScalar(other_n.dot(balloons[j].direction));
 
                     //edge case traveling in the exact same direction
+                    //CHANGE to if the difference between the directions length is <....
                     if ((balloon_n.x == 0) && (balloon_n.y == 0) && (balloon_n.z == 0)) {
 
                         //jitter directions
                         //console.log(`Edge case, exactly equal directions, jittering directions...\n`);
-                        let delta = getJitter(5.0, 5.0, 5.0);
+                        let dx = (Math.random() - 0.5) * 5.0; 
+                        let dy = (Math.random() - 0.5) * 5.0; 
+                        let dz = (Math.random() - 0.5) * 5.0;
+                        let delta = new THREE.Vector3(dx, dy, dz).normalize();
                         //console.log(`Adding the direction vector <${delta.x},${delta.y},${delta.z}>\n`)
                         //console.log(`To the direction of the balloon <${balloons[i].direction.x},${balloons[i].direction.y},${balloons[i].direction.z}>\n`)
                         balloons[i].direction.addVectors(balloons[i].direction, delta);
@@ -1201,28 +1199,18 @@ function updateScore(score_amt) {
 
 /* Animate */
 
-let wayTimer = 0;
-let windTimer = 0;
 let balloonTimer = 0;
 let balloonIndex = 0;
 const balloonSpawnInterval = 1;
 function animate() {
-
-    // Set clock, times
     requestAnimationFrame(animate);
     time = clock.getElapsedTime();
     delta = time - last;
     last = time;
 
-    // TODO: trig f'n modulate sky color based on elapsed\
-
-    // Increment animation timers
-    windTimer += delta;
+    // TODO: trig f'n modulate sky color based on elapsed
     balloonTimer += delta;
     dartTimer += delta;
-    wayTimer += delta;
-
-    // Spawn balloons
     if (balloonTimer >= balloonSpawnInterval) {
         const waypoints = [
             new THREE.Vector3(93.9, BALLOON_MIN_Y, -34),
@@ -1254,7 +1242,6 @@ function animate() {
             scene.remove(balloons[i].balloon);
             balloons.splice(i, 1);
         }
-
         if (!balloons[i].lerping) {
             if (wayTimer >  WAY_TIMER ) {
 
@@ -1287,7 +1274,7 @@ function animate() {
 
     updatePlayerMovement(balloons, delta);
 
-    // Engage automatic fire on long mouse hold
+    //engage automatic fire on long mouse hold
     if (firing && !automatic) {
         felta += delta;
         if (felta >= 0.5) {
@@ -1296,7 +1283,7 @@ function animate() {
         }
     }
 
-    // Automatic shots
+    //automatic fire
     if (automatic && dartTimer >= 1 / FIRE_RATE) {
         let direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
@@ -1308,15 +1295,9 @@ function animate() {
 
     bounceBalloons(balloons);
 
-
-    if (windTimer >= WIND_INTERVAL) {
-        callWind(balloons, Math.random() * WORLDSIZE, 1, 20);  //radius 32, magnitude 1-20
-        windTimer = 0;
-    }
-
-    const cameraVelocity = playerProperties.velocity.clone();
-    cameraVelocity.multiplyScalar(delta);
-    camera.position.add(cameraVelocity);
+    // const cameraVelocity = playerProperties.velocity.clone();
+    // cameraVelocity.multiplyScalar(delta);
+    // camera.position.add(cameraVelocity);
 
     // if (camera.position.y <= PLAYER_HEIGHT) {
     //     camera.position.y = PLAYER_HEIGHT;
